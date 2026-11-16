@@ -170,6 +170,10 @@ textarea.note:focus{border-color:var(--mint)}
 .confetti{position:fixed;top:-10px;width:9px;height:14px;border-radius:3px;pointer-events:none;z-index:8;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.8}}
 
+.langs{display:inline-flex;gap:2px;padding:4px!important}
+.langs button{color:#fff;padding:4px 9px;border-radius:99px;font-size:13px;opacity:.8}
+.langs button.on{background:rgba(255,255,255,.38);opacity:1;font-weight:700}
+.hero .actions{flex-wrap:wrap}
 @media (max-width:900px){
   .grid{grid-template-columns:1fr}
   .hero{flex-direction:column;align-items:stretch;padding:22px}
@@ -182,7 +186,7 @@ textarea.note:focus{border-color:var(--mint)}
 }
 </style>
 </head>
-<body>
+<body data-doc="doc_index">
 <div class="wrap">
   <section class="hero">
     <div class="shade"></div>
@@ -191,55 +195,57 @@ textarea.note:focus{border-color:var(--mint)}
       <h1 id="greet">你好 🌿</h1>
       <p id="dateLine"></p>
       <div class="actions">
-        <button class="pill" id="todayBtn">回到今天</button>
-        <button class="pill" id="themeBtn">◐ 主题</button>
+        <button class="pill" id="todayBtn" data-i18n="btn_today">回到今天</button>
+        <button class="pill" id="themeBtn" data-i18n="btn_theme">◐ 主题</button>
+        <a class="pill" href="sky.html" style="text-decoration:none" data-i18n="btn_sky">🪐 3D 天空</a>
+        <span class="pill langs"><button data-lang="zh">中</button><button data-lang="en">EN</button><button data-lang="ru">RU</button></span>
       </div>
     </div>
     <div class="clock">
-      <div class="clabel">北京时间 · UTC+8</div>
+      <div class="clabel" data-i18n="clock_label">北京时间 · UTC+8</div>
       <div class="digits" id="clock">--<span class="colon">:</span>--<span class="sec">--</span></div>
       <div class="cdate" id="cdate"></div>
     </div>
     <div class="daybar">
       <div class="dtrack" id="dtrack"></div>
       <div class="dticks"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
-      <div class="dinfo"><span id="dayPct"></span><button id="followBtn">↺ 回到此刻配色</button><span id="dayLeft"></span></div>
+      <div class="dinfo"><span id="dayPct"></span><button id="followBtn" data-i18n="follow">↺ 回到此刻配色</button><span id="dayLeft"></span></div>
     </div>
   </section>
 
   <div class="week">
-    <button class="nav" id="prevW" title="上一周">‹</button>
+    <button class="nav" id="prevW" data-i18n-title="prev_week" title="上一周">‹</button>
     <div class="days" id="days"></div>
-    <button class="nav" id="nextW" title="下一周">›</button>
+    <button class="nav" id="nextW" data-i18n-title="next_week" title="下一周">›</button>
   </div>
 
   <div class="grid">
     <main class="card">
       <h2>📝 <span id="listTitle">今日待办</span><span class="sub" id="listSub"></span></h2>
       <form class="add" id="addForm">
-        <input type="text" id="newText" placeholder="今天要做什么？回车添加" autocomplete="off">
-        <input type="time" id="newTime" title="时间（可选）">
-        <button class="btn" type="submit">＋ 添加</button>
+        <input type="text" id="newText" data-i18n-ph="add_ph" placeholder="今天要做什么？回车添加" autocomplete="off">
+        <input type="time" id="newTime" data-i18n-title="time_opt" title="时间（可选）">
+        <button class="btn" type="submit" data-i18n="add_btn">＋ 添加</button>
       </form>
       <div class="opts">
-        <span>优先级</span>
+        <span data-i18n="lbl_pri">优先级</span>
         <div class="chips" id="priChips"></div>
-        <span>分类</span>
+        <span data-i18n="lbl_cat">分类</span>
         <div class="chips" id="catChips"></div>
       </div>
-      <div class="banner" id="carry"><span id="carryTxt"></span><button id="carryBtn">全部移到今天 →</button></div>
+      <div class="banner" id="carry"><span id="carryTxt"></span><button id="carryBtn" data-i18n="carry_btn">全部移到今天 →</button></div>
 
       <div class="tabs" id="tabs">
-        <button class="tab on" data-f="all">全部</button>
-        <button class="tab" data-f="todo">未完成</button>
-        <button class="tab" data-f="done">已完成</button>
+        <button class="tab on" data-f="all" data-i18n="tab_all">全部</button>
+        <button class="tab" data-f="todo" data-i18n="tab_todo">未完成</button>
+        <button class="tab" data-f="done" data-i18n="tab_done">已完成</button>
       </div>
       <div class="list" id="list"></div>
     </main>
 
     <div class="side">
       <section class="card">
-        <h2>🌱 今日进度</h2>
+        <h2 data-i18n="h_progress">🌱 今日进度</h2>
         <div class="ring">
           <svg width="170" height="170" viewBox="0 0 170 170">
             <circle cx="85" cy="85" r="72" fill="none" stroke="var(--surface2)" stroke-width="14"/>
@@ -248,26 +254,26 @@ textarea.note:focus{border-color:var(--mint)}
           <div class="c"><b id="pct">0%</b><small id="pctTxt">还没开始</small></div>
         </div>
         <div class="kpis">
-          <div class="kpi"><b id="kDone">0</b><small>已完成</small></div>
-          <div class="kpi"><b id="kLeft">0</b><small>待完成</small></div>
-          <div class="kpi"><b id="kHigh">0</b><small>重要未做</small></div>
+          <div class="kpi"><b id="kDone">0</b><small data-i18n="kpi_done">已完成</small></div>
+          <div class="kpi"><b id="kLeft">0</b><small data-i18n="kpi_left">待完成</small></div>
+          <div class="kpi"><b id="kHigh">0</b><small data-i18n="kpi_high">重要未做</small></div>
         </div>
       </section>
 
       <section class="card">
-        <h2>🗂 分类完成度</h2>
+        <h2 data-i18n="h_cats">🗂 分类完成度</h2>
         <div id="cats"></div>
       </section>
 
       <section class="card">
-        <h2>🔥 连续打卡</h2>
-        <div class="streak"><b id="streak">0</b> 天全部完成 <span style="color:var(--text2);font-size:12px;margin-left:auto">完成当天所有待办即打卡</span></div>
+        <h2 data-i18n="h_streak">🔥 连续打卡</h2>
+        <div class="streak"><b id="streak">0</b> <span data-i18n="streak_unit">天全部完成</span> <span style="color:var(--text2);font-size:12px;margin-left:auto;text-align:right" data-i18n="streak_hint">完成当天所有待办即打卡</span></div>
       </section>
 
       <section class="card">
-        <h2>💭 今日心情 & 小记</h2>
+        <h2 data-i18n="h_mood">💭 今日心情 & 小记</h2>
         <div class="moods" id="moods"></div>
-        <textarea class="note" id="note" placeholder="今天有什么想记下来的？"></textarea>
+        <textarea class="note" id="note" data-i18n-ph="note_ph" placeholder="今天有什么想记下来的？"></textarea>
       </section>
 
       <section class="card">
@@ -278,6 +284,36 @@ textarea.note:focus{border-color:var(--mint)}
 </div>
 <div class="toast" id="toast"></div>
 
+<script>
+/* ===== 多语言：中文 / English / Русский ===== */
+const I18N={"zh": {"doc_index": "每日待办 · Mint Daily", "doc_sky": "薄荷天空 · 3D Mint Sky", "btn_theme": "◐ 主题", "bj_time": "北京时间", "wd": ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], "wd_long": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], "ph_midnight": "深夜 · 星河", "ph_dawn": "清晨 · 晨曦", "ph_morning": "上午 · 薄荷", "ph_noon": "正午 · 晴光", "ph_after": "午后 · 湖青", "ph_dusk": "黄昏 · 落日", "ph_blue": "傍晚 · 蓝调", "ph_night": "夜晚 · 粉调", "ph_late": "深夜 · 星河", "tip_midnight": "夜深了，早点休息", "tip_dawn": "新的一天开始了", "tip_morning": "精力最好的时候，先做最难的事", "tip_noon": "吃饭午休，给自己充充电", "tip_after": "下午还长，再推进一两件事", "tip_dusk": "太阳下山了，看看今天完成了多少", "tip_blue": "蓝调时刻，收个尾吧", "tip_night": "复盘一下，写两句小记", "tip_late": "今天辛苦了，晚安", "greet": ["夜深了", "早上好", "中午好", "下午好", "晚上好"], "rel_today": "今天", "rel_tomorrow": "明天", "rel_yesterday": "昨天", "list_today": "今天的待办", "list_tomorrow": "明天的待办", "list_yesterday": "昨天的待办", "list_date": "{d}的待办", "btn_today": "回到今天", "btn_sky": "🪐 3D 天空", "clock_label": "北京时间 · UTC+8", "follow": "↺ 回到此刻配色", "day_pct": "今天已经过去 {p}%", "day_left": "距离今天结束还有 {h} 小时 {m} 分", "seg_title": "{p}（{a}–{b}）点击预览", "preview": "预览：{p}", "prev_week": "上一周", "next_week": "下一周", "add_ph": "今天要做什么？回车添加", "time_opt": "时间（可选）", "add_btn": "＋ 添加", "lbl_pri": "优先级", "lbl_cat": "分类", "pri_high": "重要", "pri_mid": "一般", "pri_low": "随意", "cat_学习": "学习", "cat_写稿": "写稿", "cat_采访": "采访", "cat_生活": "生活", "cat_运动": "运动", "cat_其他": "其他", "carry_txt": "🌱 之前还有 {n} 件事没做完", "carry_btn": "全部移到今天 →", "carry_toast": "已把 {n} 件事移到今天", "tab_all": "全部", "tab_todo": "未完成", "tab_done": "已完成", "list_sub": "{d} / {n} 已完成", "empty_alldone": "全部完成啦，给自己一点奖励吧！", "empty_here": "这里还空着", "empty_none": "还没有待办，写下第一件事吧", "t_done": "完成", "t_edit": "双击编辑", "t_star": "切换重要", "t_del": "删除", "h_progress": "🌱 今日进度", "pct_none": "还没有任务", "pct_all": "全部完成 ✨", "pct_half": "过半啦，加油", "pct_start": "好的开始", "pct_zero": "还没开始", "kpi_done": "已完成", "kpi_left": "待完成", "kpi_high": "重要未做", "h_cats": "🗂 分类完成度", "cats_empty": "添加任务后这里会显示各分类进度", "h_streak": "🔥 连续打卡", "streak_unit": "天全部完成", "streak_hint": "完成当天所有待办即打卡", "h_mood": "💭 今日心情 & 小记", "note_ph": "今天有什么想记下来的？", "toast_alldone": "🎉 今天的待办全部完成！", "toast_del": "已删除", "quotes": ["把大事拆小，把小事做完。", "今天的一小步，是明天的一大段路。", "先完成，再完美。", "专注一件事，胜过同时想十件事。", "你不需要很厉害才能开始，你需要开始才能很厉害。", "慢慢来，比较快。", "把最难的事放在精力最好的时候。"], "seed1": "欢迎使用薄荷待办 🌿 点左边圆圈完成任务", "seed2": "双击文字可以直接编辑", "seed3": "点 ☆ 可以把任务标为重要", "loading": "正在搭建天空…", "fb1": "3D 引擎没加载出来", "fb2": "这个页面需要联网加载 Three.js，请检查网络后刷新。如果浏览器太旧，换成新版 Chrome / Edge / Safari 试试。", "fb_back": "← 回到薄荷待办", "sky_todo": "📝 待办", "rot": "⟳ 自动旋转", "swing_btn": "🪁 秋千", "todo_head": "🪐 今日待办星球", "planet_ph": "添加一颗新星球…", "hint": "🖱 拖动旋转 · 滚轮缩放 · 点星球完成待办", "sky_time": "🕒 天空时间", "mode_live": "此刻", "mode_prev": "预览", "mode_ff": "快进中", "wx_clear": "☀️ 晴", "wx_rain": "🌧 雨", "wx_snow": "❄️ 雪", "play": "▶ 快进一天", "pause": "⏸ 暂停", "live": "↺ 回到此刻", "planet_empty": "今天还没有待办，在上面添加一颗星球吧 🌱", "lb_done": "已完成 · 点击取消", "lb_todo": "点击完成", "tst_done": "✨ 完成：{t}", "tst_undo": "↩ 取消完成：{t}", "tst_all": "🎉 今天的星球全部点亮了！", "tst_new": "🪐 新星球升空", "tst_clear": "☀️ 放晴了", "tst_rain": "🌧 下雨了，听听雨声吧", "tst_snow": "❄️ 下雪啦", "sseed1": "点我完成这颗星球 ✨", "sseed2": "拖动画面转一转", "sseed3": "拖底部时间条看日落", "guide_btn": "❔ 使用指南", "guide_title": "🌿 网站使用指南", "close": "关闭", "g1t": "🖱 看风景", "g1d": "拖动画面旋转视角，滚轮或双指缩放。左上角「⟳ 自动旋转」可以开关自动转圈。", "g2t": "🪐 待办星球", "g2d": "在右侧面板添加今天的待办，每件事会变成一颗绕岛飞的小星球。点星球或列表就能完成，全部完成会放烟花 🎉", "g3t": "🕒 时间与天色", "g3d": "天空跟着北京时间变化：清晨晨曦、黄昏落日、傍晚蓝调、夜晚粉调。拖动底部时间条可以预览任意时刻，「▶ 快进一天」20 秒看完日升日落。", "g4t": "🌦 天气", "g4d": "底部可以切换 ☀️ 晴、🌧 雨、❄️ 雪。下雪时小岛会慢慢变白，雨夜偶尔会打闪。", "g5t": "📝 完整待办页", "g5d": "左上角「📝 待办」进入完整待办页，可以设置优先级、分类、写心情小记，两边数据同步。", "g6t": "◐ 主题", "g6d": "左上角切换浅色和深色。", "g7t": "🌐 语言", "g7d": "左上角可以切换 中文 / EN / RU。", "tired": "🪁 累了的话，可以去荡秋千", "go_swing": "去荡秋千", "tired_note": "也可以直接点小岛边上的秋千", "privacy": "🔒 待办只保存在你自己的浏览器里，不会上传。", "sw_t1": "🪁 荡秋千中", "sw_t2": "累了就歇一会儿，看看天空和云海 🌿", "inhale": "吸气…", "exhale": "呼气…", "sw_exit": "↩ 回到小岛"}, "en": {"doc_index": "Mint Daily · To-dos", "doc_sky": "3D Mint Sky", "btn_theme": "◐ Theme", "bj_time": "Beijing Time", "wd": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], "wd_long": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "ph_midnight": "Late night · Starry sky", "ph_dawn": "Dawn · First light", "ph_morning": "Morning · Mint", "ph_noon": "Noon · Sunshine", "ph_after": "Afternoon · Lake blue", "ph_dusk": "Dusk · Sunset", "ph_blue": "Evening · Blue hour", "ph_night": "Night · Pink hour", "ph_late": "Late night · Starry sky", "tip_midnight": "It's late — get some rest", "tip_dawn": "A new day begins", "tip_morning": "Peak energy — do the hardest thing first", "tip_noon": "Lunch and a break — recharge", "tip_after": "Plenty of afternoon left — push one or two more things", "tip_dusk": "The sun is setting — see how much you've done", "tip_blue": "Blue hour — time to wrap up", "tip_night": "Look back on the day and jot a few notes", "tip_late": "You did well today. Good night", "greet": ["Still up?", "Good morning", "Good day", "Good afternoon", "Good evening"], "rel_today": "Today", "rel_tomorrow": "Tomorrow", "rel_yesterday": "Yesterday", "list_today": "Today's to-dos", "list_tomorrow": "Tomorrow's to-dos", "list_yesterday": "Yesterday's to-dos", "list_date": "To-dos for {d}", "btn_today": "Back to today", "btn_sky": "🪐 3D Sky", "clock_label": "Beijing Time · UTC+8", "follow": "↺ Back to current colors", "day_pct": "{p}% of today has passed", "day_left": "{h} h {m} min left today", "seg_title": "{p} ({a}–{b}) · click to preview", "preview": "Preview: {p}", "prev_week": "Previous week", "next_week": "Next week", "add_ph": "What's on today? Press Enter to add", "time_opt": "Time (optional)", "add_btn": "＋ Add", "lbl_pri": "Priority", "lbl_cat": "Category", "pri_high": "Important", "pri_mid": "Normal", "pri_low": "Whenever", "cat_学习": "Study", "cat_写稿": "Writing", "cat_采访": "Interview", "cat_生活": "Life", "cat_运动": "Exercise", "cat_其他": "Other", "carry_txt": "🌱 {n} unfinished task(s) from earlier", "carry_btn": "Move all to today →", "carry_toast": "Moved {n} task(s) to today", "tab_all": "All", "tab_todo": "To do", "tab_done": "Done", "list_sub": "{d} / {n} done", "empty_alldone": "All done — treat yourself!", "empty_here": "Nothing here yet", "empty_none": "No to-dos yet — write down the first one", "t_done": "Complete", "t_edit": "Double-click to edit", "t_star": "Toggle important", "t_del": "Delete", "h_progress": "🌱 Today's progress", "pct_none": "No tasks yet", "pct_all": "All done ✨", "pct_half": "Over halfway — keep going", "pct_start": "Good start", "pct_zero": "Not started yet", "kpi_done": "Done", "kpi_left": "To do", "kpi_high": "Important left", "h_cats": "🗂 By category", "cats_empty": "Add tasks to see progress by category", "h_streak": "🔥 Streak", "streak_unit": "day(s) with everything done", "streak_hint": "Finish all of a day's to-dos to keep it going", "h_mood": "💭 Mood & notes", "note_ph": "Anything you want to remember about today?", "toast_alldone": "🎉 All of today's to-dos are done!", "toast_del": "Deleted", "quotes": ["Break big things into small ones, then finish the small ones.", "A small step today is a long road tomorrow.", "Done first, perfect later.", "Focusing on one thing beats thinking about ten.", "You don't have to be great to start, but you have to start to be great.", "Slow is smooth, and smooth is fast.", "Save the hardest task for your best hours."], "seed1": "Welcome to Mint Daily 🌿 Click the circle on the left to complete a task", "seed2": "Double-click the text to edit it", "seed3": "Click ☆ to mark a task as important", "loading": "Building the sky…", "fb1": "The 3D engine didn't load", "fb2": "This page loads Three.js from the internet. Please check your connection and refresh. If your browser is old, try a recent Chrome, Edge or Safari.", "fb_back": "← Back to Mint Daily", "sky_todo": "📝 To-dos", "rot": "⟳ Auto-rotate", "swing_btn": "🪁 Swing", "todo_head": "🪐 Today's to-do planets", "planet_ph": "Add a new planet…", "hint": "🖱 Drag to rotate · Scroll to zoom · Click a planet to complete it", "sky_time": "🕒 Sky time", "mode_live": "Now", "mode_prev": "Preview", "mode_ff": "Fast-forwarding", "wx_clear": "☀️ Clear", "wx_rain": "🌧 Rain", "wx_snow": "❄️ Snow", "play": "▶ Fast-forward a day", "pause": "⏸ Pause", "live": "↺ Back to now", "planet_empty": "No to-dos yet today — add a planet above 🌱", "lb_done": "Done · click to undo", "lb_todo": "Click to complete", "tst_done": "✨ Done: {t}", "tst_undo": "↩ Undone: {t}", "tst_all": "🎉 All of today's planets are lit!", "tst_new": "🪐 A new planet takes off", "tst_clear": "☀️ The sky has cleared", "tst_rain": "🌧 It's raining — listen to the rain", "tst_snow": "❄️ It's snowing!", "sseed1": "Click me to complete this planet ✨", "sseed2": "Drag the view to look around", "sseed3": "Drag the time bar to watch the sunset", "guide_btn": "❔ How to use", "guide_title": "🌿 How to use this site", "close": "Close", "g1t": "🖱 Look around", "g1d": "Drag to rotate the view; scroll or pinch to zoom. \"⟳ Auto-rotate\" (top left) turns the slow spin on or off.", "g2t": "🪐 To-do planets", "g2d": "Add today's to-dos in the panel on the right — each one becomes a little planet orbiting the island. Click a planet or a list item to complete it. Finish them all for fireworks 🎉", "g3t": "🕒 Time & sky colors", "g3d": "The sky follows Beijing time: first light at dawn, sunset at dusk, the blue hour in the evening and pink tones at night. Drag the time bar at the bottom to preview any moment, or tap \"▶ Fast-forward a day\" to watch a whole day in 20 seconds.", "g4t": "🌦 Weather", "g4d": "Switch between ☀️ Clear, 🌧 Rain and ❄️ Snow at the bottom. In snow the island slowly turns white; on rainy nights there's the occasional flash of lightning.", "g5t": "📝 Full to-do page", "g5d": "\"📝 To-dos\" (top left) opens the full to-do page, where you can set priorities and categories and write mood notes. Both pages share the same data.", "g6t": "◐ Theme", "g6d": "Switch between light and dark mode (top left).", "g7t": "🌐 Language", "g7d": "Switch between 中文 / EN / RU (top left).", "tired": "🪁 Tired? Go sit on the swing", "go_swing": "Go swing", "tired_note": "You can also just click the swing at the edge of the island", "privacy": "🔒 Your to-dos stay in your own browser and are never uploaded.", "sw_t1": "🪁 On the swing", "sw_t2": "Take a break and watch the sky and the sea of clouds 🌿", "inhale": "Breathe in…", "exhale": "Breathe out…", "sw_exit": "↩ Back to the island"}, "ru": {"doc_index": "Mint Daily · Задачи", "doc_sky": "Мятное небо · 3D", "btn_theme": "◐ Тема", "bj_time": "Пекинское время", "wd": ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], "wd_long": ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], "ph_midnight": "Глубокая ночь · Звёзды", "ph_dawn": "Рассвет · Заря", "ph_morning": "Утро · Мята", "ph_noon": "Полдень · Солнце", "ph_after": "День · Озёрная лазурь", "ph_dusk": "Сумерки · Закат", "ph_blue": "Вечер · Синий час", "ph_night": "Ночь · Розовые тона", "ph_late": "Глубокая ночь · Звёзды", "tip_midnight": "Уже поздно, пора отдыхать", "tip_dawn": "Начинается новый день", "tip_morning": "Пик энергии — начните с самого трудного", "tip_noon": "Обед и отдых — подзарядитесь", "tip_after": "Впереди ещё полдня — сделайте ещё пару дел", "tip_dusk": "Солнце садится — посмотрите, сколько сделано", "tip_blue": "Синий час — пора закругляться", "tip_night": "Подведите итоги и запишите пару мыслей", "tip_late": "Вы хорошо потрудились. Спокойной ночи", "greet": ["Доброй ночи", "Доброе утро", "Добрый день", "Добрый день", "Добрый вечер"], "rel_today": "Сегодня", "rel_tomorrow": "Завтра", "rel_yesterday": "Вчера", "list_today": "Задачи на сегодня", "list_tomorrow": "Задачи на завтра", "list_yesterday": "Вчерашние задачи", "list_date": "Задачи на {d}", "btn_today": "К сегодня", "btn_sky": "🪐 3D-небо", "clock_label": "Пекинское время · UTC+8", "follow": "↺ Вернуть текущие цвета", "day_pct": "Прошло {p}% дня", "day_left": "До конца дня {h} ч {m} мин", "seg_title": "{p} ({a}–{b}) · нажмите для просмотра", "preview": "Просмотр: {p}", "prev_week": "Прошлая неделя", "next_week": "Следующая неделя", "add_ph": "Что сделать сегодня? Нажмите Enter", "time_opt": "Время (необязательно)", "add_btn": "＋ Добавить", "lbl_pri": "Приоритет", "lbl_cat": "Категория", "pri_high": "Важно", "pri_mid": "Обычно", "pri_low": "Не срочно", "cat_学习": "Учёба", "cat_写稿": "Тексты", "cat_采访": "Интервью", "cat_生活": "Быт", "cat_运动": "Спорт", "cat_其他": "Другое", "carry_txt": "🌱 Незавершённых задач с прошлых дней: {n}", "carry_btn": "Перенести на сегодня →", "carry_toast": "Перенесено на сегодня: {n}", "tab_all": "Все", "tab_todo": "Активные", "tab_done": "Готово", "list_sub": "Готово: {d} / {n}", "empty_alldone": "Всё сделано — побалуйте себя!", "empty_here": "Пока пусто", "empty_none": "Задач пока нет — запишите первую", "t_done": "Выполнить", "t_edit": "Дважды нажмите, чтобы изменить", "t_star": "Отметить как важное", "t_del": "Удалить", "h_progress": "🌱 Прогресс дня", "pct_none": "Задач пока нет", "pct_all": "Всё готово ✨", "pct_half": "Больше половины — так держать", "pct_start": "Хорошее начало", "pct_zero": "Ещё не начато", "kpi_done": "Готово", "kpi_left": "Осталось", "kpi_high": "Важные", "h_cats": "🗂 По категориям", "cats_empty": "Добавьте задачи, чтобы увидеть прогресс по категориям", "h_streak": "🔥 Серия", "streak_unit": "дн. подряд всё выполнено", "streak_hint": "Выполните все задачи дня, чтобы продлить серию", "h_mood": "💭 Настроение и заметки", "note_ph": "Что хочется запомнить о сегодняшнем дне?", "toast_alldone": "🎉 Все задачи на сегодня выполнены!", "toast_del": "Удалено", "quotes": ["Разбейте большое на малое — и доделайте малое.", "Маленький шаг сегодня — большой путь завтра.", "Сначала сделать, потом улучшить.", "Сосредоточиться на одном лучше, чем думать о десяти.", "Не нужно быть великим, чтобы начать, но нужно начать, чтобы стать великим.", "Тише едешь — дальше будешь.", "Самое трудное — на часы, когда больше всего сил."], "seed1": "Добро пожаловать в Mint Daily 🌿 Нажмите на кружок слева, чтобы выполнить задачу", "seed2": "Дважды нажмите на текст, чтобы изменить его", "seed3": "Нажмите ☆, чтобы отметить задачу как важную", "loading": "Строим небо…", "fb1": "Не удалось загрузить 3D-движок", "fb2": "Эта страница загружает Three.js из интернета. Проверьте подключение и обновите страницу. Если браузер устарел, попробуйте свежий Chrome, Edge или Safari.", "fb_back": "← Назад к Mint Daily", "sky_todo": "📝 Задачи", "rot": "⟳ Автоповорот", "swing_btn": "🪁 Качели", "todo_head": "🪐 Планеты задач", "planet_ph": "Новая планета…", "hint": "🖱 Тяните — вращение · Колёсико — масштаб · Нажмите на планету, чтобы выполнить задачу", "sky_time": "🕒 Время неба", "mode_live": "Сейчас", "mode_prev": "Просмотр", "mode_ff": "Перемотка", "wx_clear": "☀️ Ясно", "wx_rain": "🌧 Дождь", "wx_snow": "❄️ Снег", "play": "▶ Прокрутить день", "pause": "⏸ Пауза", "live": "↺ Вернуться в сейчас", "planet_empty": "Задач пока нет — добавьте планету выше 🌱", "lb_done": "Готово · нажмите, чтобы отменить", "lb_todo": "Нажмите, чтобы выполнить", "tst_done": "✨ Готово: {t}", "tst_undo": "↩ Отменено: {t}", "tst_all": "🎉 Все планеты на сегодня зажглись!", "tst_new": "🪐 Новая планета взлетела", "tst_clear": "☀️ Прояснилось", "tst_rain": "🌧 Пошёл дождь — послушайте его", "tst_snow": "❄️ Пошёл снег!", "sseed1": "Нажмите на меня, чтобы выполнить ✨", "sseed2": "Потяните экран, чтобы осмотреться", "sseed3": "Потяните шкалу времени, чтобы увидеть закат", "guide_btn": "❔ Как пользоваться", "guide_title": "🌿 Как пользоваться сайтом", "close": "Закрыть", "g1t": "🖱 Осмотреться", "g1d": "Тяните, чтобы повернуть вид; колёсико или два пальца — масштаб. Кнопка «⟳ Автоповорот» слева вверху включает и выключает вращение.", "g2t": "🪐 Планеты задач", "g2d": "Добавляйте задачи на сегодня в панели справа — каждая станет маленькой планетой вокруг острова. Нажмите на планету или пункт списка, чтобы выполнить задачу. Выполните все — будет салют 🎉", "g3t": "🕒 Время и цвет неба", "g3d": "Небо меняется по пекинскому времени: заря на рассвете, закат в сумерках, синий час вечером и розовые тона ночью. Потяните шкалу времени внизу, чтобы увидеть любой момент, или нажмите «▶ Прокрутить день» — весь день за 20 секунд.", "g4t": "🌦 Погода", "g4d": "Внизу можно выбрать ☀️ Ясно, 🌧 Дождь или ❄️ Снег. В снег остров постепенно белеет, а дождливой ночью иногда сверкает молния.", "g5t": "📝 Полная страница задач", "g5d": "«📝 Задачи» слева вверху открывает полную страницу задач: приоритеты, категории, настроение и заметки. Данные на обеих страницах общие.", "g6t": "◐ Тема", "g6d": "Светлая и тёмная тема переключаются слева вверху.", "g7t": "🌐 Язык", "g7d": "Язык переключается слева вверху: 中文 / EN / RU.", "tired": "🪁 Устали? Покачайтесь на качелях", "go_swing": "На качели", "tired_note": "Можно и просто нажать на качели у края острова", "privacy": "🔒 Задачи хранятся только в вашем браузере и никуда не отправляются.", "sw_t1": "🪁 На качелях", "sw_t2": "Отдохните и посмотрите на небо и море облаков 🌿", "inhale": "Вдох…", "exhale": "Выдох…", "sw_exit": "↩ Назад на остров"}};
+const LANGS=['zh','en','ru'],LANG_KEY='mint-daily-v1-lang',LOC={zh:'zh-CN',en:'en-US',ru:'ru-RU'};
+let LANG=(()=>{try{const v=localStorage.getItem(LANG_KEY);if(LANGS.includes(v))return v}catch(e){}
+  const n=(navigator.language||'zh').toLowerCase();return n.startsWith('ru')?'ru':n.startsWith('zh')?'zh':'en'})();
+function T(key,p){let s=I18N[LANG][key];if(s===undefined)s=I18N.zh[key];if(s===undefined)return key;
+  if(p&&typeof s==='string')for(const x in p)s=s.split('{'+x+'}').join(p[x]);return s}
+function longDate(d){if(LANG==='zh')return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · ${T('wd_long')[d.getDay()]}`;
+  return new Intl.DateTimeFormat(LOC[LANG],{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(d)}
+function shortDate(d){if(LANG==='zh')return `${d.getMonth()+1}月${d.getDate()}日`;
+  return new Intl.DateTimeFormat(LOC[LANG],{month:'long',day:'numeric'}).format(d)}
+function clockDate(d){const p=n=>String(n).padStart(2,'0');
+  if(LANG==='zh')return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${T('wd_long')[d.getDay()]}`;
+  if(LANG==='ru')return `${T('wd')[d.getDay()]}, ${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`;
+  return `${T('wd')[d.getDay()]}, ${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())}`}
+function applyI18n(){
+  document.documentElement.lang=LOC[LANG];
+  document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=T(e.dataset.i18n));
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>e.placeholder=T(e.dataset.i18nPh));
+  document.querySelectorAll('[data-i18n-title]').forEach(e=>e.title=T(e.dataset.i18nTitle));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  if(document.body.dataset.doc)document.title=T(document.body.dataset.doc);
+}
+function setLang(l){if(!LANGS.includes(l))return;LANG=l;try{localStorage.setItem(LANG_KEY,l)}catch(e){}
+  applyI18n();window.dispatchEvent(new Event('langchange'))}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(b)setLang(b.dataset.lang)});
+window.addEventListener('storage',e=>{if(e.key===LANG_KEY&&LANGS.includes(e.newValue)&&e.newValue!==LANG)setLang(e.newValue)});
+applyI18n();
+</script>
 <script>
 const $=s=>document.querySelector(s);
 const KEY='mint-daily-v1';
@@ -302,9 +338,9 @@ function load(){
   try{const s=JSON.parse(store.get(KEY));if(s&&s.days)return s}catch(e){}
   const s={days:{}};
   s.days[TODAY]={tasks:[
-    {id:uid(),text:'欢迎使用薄荷待办 🌿 点左边圆圈完成任务',done:false,pri:'high',cat:'其他',time:''},
-    {id:uid(),text:'双击文字可以直接编辑',done:false,pri:'mid',cat:'学习',time:''},
-    {id:uid(),text:'点 ☆ 可以把任务标为重要',done:true,pri:'low',cat:'生活',time:''}
+    {id:uid(),text:T('seed1'),done:false,pri:'high',cat:'其他',time:''},
+    {id:uid(),text:T('seed2'),done:false,pri:'mid',cat:'学习',time:''},
+    {id:uid(),text:T('seed3'),done:true,pri:'low',cat:'生活',time:''}
   ],note:'',mood:''};
   return s;
 }
@@ -317,12 +353,12 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 /* 顶部 */
 function renderHero(){
   const h=bj().getHours();
-  $('#greet').textContent=(h<5?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好')+' '+curPhase().icon;
+  $('#greet').textContent=T('greet')[h<5?0:h<11?1:h<14?2:h<18?3:4]+' '+curPhase().icon;
   const d=parse(sel);
-  const rel=sel===TODAY?'今天':sel===addDays(TODAY,1)?'明天':sel===addDays(TODAY,-1)?'昨天':'';
-  $('#dateLine').textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${WD[d.getDay()]}${rel?' · '+rel:''}`;
-  $('#listTitle').textContent=rel?rel+'的待办':`${d.getMonth()+1}月${d.getDate()}日的待办`;
-  $('#quote').textContent='“'+QUOTES[d.getDate()%QUOTES.length]+'”';
+  const rk=sel===TODAY?'today':sel===addDays(TODAY,1)?'tomorrow':sel===addDays(TODAY,-1)?'yesterday':'',rel=rk?T('rel_'+rk):'';
+  $('#dateLine').textContent=longDate(d)+(rel?' · '+rel:'');
+  $('#listTitle').textContent=rk?T('list_'+rk):T('list_date',{d:shortDate(d)});
+  const Q=T('quotes');$('#quote').textContent=(LANG==='ru'?'«':'“')+Q[d.getDate()%Q.length]+(LANG==='ru'?'»':'”');
 }
 /* 周条 */
 function renderWeek(){
@@ -330,13 +366,13 @@ function renderWeek(){
   $('#days').innerHTML=[...Array(7)].map((_,i)=>{
     const k=addDays(mon,i),dd=parse(k),t=(S.days[k]||{}).tasks||[],r=t.length?t.filter(x=>x.done).length/t.length:0;
     return `<button class="day ${k===TODAY?'today':''} ${k===sel?'sel':''}" data-k="${k}">
-      <div class="w">${k===TODAY?'今天':'周'+WD[dd.getDay()]}</div><div class="n">${dd.getDate()}</div>
+      <div class="w">${k===TODAY?T('rel_today'):T('wd')[dd.getDay()]}</div><div class="n">${dd.getDate()}</div>
       <div class="bar"><i style="width:${r*100}%"></i></div></button>`}).join('');
 }
 /* 选项 */
 function renderOpts(){
-  $('#priChips').innerHTML=Object.entries(PRI).map(([k,p])=>`<button type="button" class="chip ${k===newPri?'on':''}" data-p="${k}"><span class="pri-dot" style="background:${p.c}"></span>${p.n}</button>`).join('');
-  $('#catChips').innerHTML=CATS.map(c=>`<button type="button" class="chip ${c===newCat?'on':''}" data-c="${c}">${c}</button>`).join('');
+  $('#priChips').innerHTML=Object.entries(PRI).map(([k,p])=>`<button type="button" class="chip ${k===newPri?'on':''}" data-p="${k}"><span class="pri-dot" style="background:${p.c}"></span>${T('pri_'+k)}</button>`).join('');
+  $('#catChips').innerHTML=CATS.map(c=>`<button type="button" class="chip ${c===newCat?'on':''}" data-c="${c}">${catName(c)}</button>`).join('');
 }
 /* 列表 */
 function sorted(ts){
@@ -347,31 +383,31 @@ function renderList(){
   let v=sorted(ts);
   if(filter==='todo')v=v.filter(t=>!t.done);
   if(filter==='done')v=v.filter(t=>t.done);
-  $('#listSub').textContent=`${ts.filter(t=>t.done).length} / ${ts.length} 已完成`;
+  $('#listSub').textContent=T('list_sub',{d:ts.filter(t=>t.done).length,n:ts.length});
   if(!v.length){
-    $('#list').innerHTML=`<div class="empty"><div class="big">${ts.length&&filter!=='done'?'🎉':'🍃'}</div>${ts.length&&filter==='todo'?'全部完成啦，给自己一点奖励吧！':ts.length?'这里还空着':'还没有待办，写下第一件事吧'}</div>`;
+    $('#list').innerHTML=`<div class="empty"><div class="big">${ts.length&&filter!=='done'?'🎉':'🍃'}</div>${ts.length&&filter==='todo'?T('empty_alldone'):ts.length?T('empty_here'):T('empty_none')}</div>`;
     return;
   }
   $('#list').innerHTML=v.map(t=>`<div class="item ${t.done?'done':''}" data-id="${t.id}">
     <span class="prib" style="background:${PRI[t.pri].c}"></span>
-    <button class="cb" data-a="toggle" title="完成">✓</button>
-    <div class="txt" data-a="edit" title="双击编辑">${esc(t.text)}</div>
-    <div class="meta">${t.time?`<span class="tag">⏰ ${t.time}</span>`:''}<span class="tag cat">${t.cat}</span></div>
-    <button class="star" data-a="star" title="切换重要">${t.pri==='high'?'★':'☆'}</button>
-    <button class="del" data-a="del" title="删除">✕</button></div>`).join('');
+    <button class="cb" data-a="toggle" title="${T('t_done')}">✓</button>
+    <div class="txt" data-a="edit" title="${T('t_edit')}">${esc(t.text)}</div>
+    <div class="meta">${t.time?`<span class="tag">⏰ ${t.time}</span>`:''}<span class="tag cat">${catName(t.cat)}</span></div>
+    <button class="star" data-a="star" title="${T('t_star')}">${t.pri==='high'?'★':'☆'}</button>
+    <button class="del" data-a="del" title="${T('t_del')}">✕</button></div>`).join('');
 }
 /* 右侧 */
 function renderSide(){
   const ts=day().tasks, done=ts.filter(t=>t.done).length, n=ts.length, r=n?done/n:0;
   $('#ringFg').style.strokeDashoffset=452.4*(1-r);
   $('#pct').textContent=Math.round(r*100)+'%';
-  $('#pctTxt').textContent=!n?'还没有任务':r===1?'全部完成 ✨':r>=.5?'过半啦，加油':done?'好的开始':'还没开始';
+  $('#pctTxt').textContent=T(!n?'pct_none':r===1?'pct_all':r>=.5?'pct_half':done?'pct_start':'pct_zero');
   $('#kDone').textContent=done;$('#kLeft').textContent=n-done;
   $('#kHigh').textContent=ts.filter(t=>t.pri==='high'&&!t.done).length;
   const used=CATS.filter(c=>ts.some(t=>t.cat===c));
   $('#cats').innerHTML=used.length?used.map(c=>{const a=ts.filter(t=>t.cat===c),d=a.filter(t=>t.done).length;
-    return `<div class="cat-row"><span>${c}</span><div class="track"><i style="width:${d/a.length*100}%"></i></div><span>${d}/${a.length}</span></div>`}).join('')
-    :'<div style="color:var(--text2);font-size:13px">添加任务后这里会显示各分类进度</div>';
+    return `<div class="cat-row"><span>${catName(c)}</span><div class="track"><i style="width:${d/a.length*100}%"></i></div><span>${d}/${a.length}</span></div>`}).join('')
+    :`<div style="color:var(--text2);font-size:13px">${T('cats_empty')}</div>`;
   // 连续打卡：从今天（若今天未全完成则从昨天）往前数
   let k=TODAY,c=0;const full=x=>{const t=(S.days[x]||{}).tasks||[];return t.length&&t.every(y=>y.done)};
   if(!full(k))k=addDays(k,-1);
@@ -386,10 +422,10 @@ function renderCarry(){
   const left=[];
   Object.keys(S.days).filter(k=>k<TODAY).forEach(k=>S.days[k].tasks.forEach(t=>{if(!t.done)left.push([k,t])}));
   $('#carry').classList.toggle('show',left.length>0);
-  $('#carryTxt').textContent=`🌱 之前还有 ${left.length} 件事没做完`;
+  $('#carryTxt').textContent=T('carry_txt',{n:left.length});
   $('#carryBtn').onclick=()=>{
     left.forEach(([k,t])=>{S.days[k].tasks=S.days[k].tasks.filter(x=>x.id!==t.id);day(TODAY).tasks.push(t)});
-    save();renderAll();toast(`已把 ${left.length} 件事移到今天`);
+    save();renderAll();toast(T('carry_toast',{n:left.length}));
   };
 }
 function renderAll(){renderHero();renderWeek();renderList();renderSide();renderCarry()}
@@ -417,10 +453,10 @@ $('#list').onclick=e=>{
   const a=e.target.closest('[data-a]');if(!a)return;const it=a.closest('.item'),ts=day().tasks,t=ts.find(x=>x.id===it.dataset.id);
   if(a.dataset.a==='toggle'){
     t.done=!t.done;save();renderAll();
-    if(t.done&&ts.every(x=>x.done)){confetti();toast('🎉 今天的待办全部完成！')}
+    if(t.done&&ts.every(x=>x.done)){confetti();toast(T('toast_alldone'))}
   }
   if(a.dataset.a==='star'){t.pri=t.pri==='high'?'mid':'high';save();renderAll()}
-  if(a.dataset.a==='del'){day().tasks=ts.filter(x=>x!==t);save();renderAll();toast('已删除')}
+  if(a.dataset.a==='del'){day().tasks=ts.filter(x=>x!==t);save();renderAll();toast(T('toast_del'))}
 };
 $('#list').ondblclick=e=>{
   const el=e.target.closest('.txt');if(!el)return;
@@ -469,14 +505,14 @@ function applyPhase(force){
   const r=document.documentElement.style;
   r.setProperty('--p1',p.c[0]);r.setProperty('--p2',p.c[1]);r.setProperty('--p3',p.c[2]);
   r.setProperty('--tint1',rgba(p.c[0],.34));r.setProperty('--tint2',rgba(p.c[2],.20));
-  $('#phaseTag').textContent=`${p.icon} ${p.name}`;
-  $('#phaseTag').title=p.tip;
+  $('#phaseTag').textContent=`${p.icon} ${T('ph_'+p.key)}`;
+  $('#phaseTag').title=T('tip_'+p.key);
   const m=document.querySelector('meta[name=theme-color]');if(m)m.content=p.c[1];
   $('#followBtn').classList.toggle('show',!!preview);
   renderHero();
 }
 function buildTrack(){
-  $('#dtrack').innerHTML=PHASES.map((p,i)=>`<button class="seg ${i===PHASES.length-1?'last':''}" data-i="${i}" title="${p.icon} ${p.name}（${fh(p.from)}–${fh(p.to)}）点击预览"
+  $('#dtrack').innerHTML=PHASES.map((p,i)=>`<button class="seg ${i===PHASES.length-1?'last':''}" data-i="${i}" title="${T('seg_title',{p:p.icon+' '+T('ph_'+p.key),a:fh(p.from),b:fh(p.to)})}"
     style="width:${(p.to-p.from)/24*100}%;background:linear-gradient(90deg,${p.c[0]},${p.c[2]})"></button>`).join('')+'<span class="now" id="nowMark"></span>';
 }
 const fh=h=>`${Math.floor(h)}:${String(Math.round(h%1*60)).padStart(2,'0')}`;
@@ -484,16 +520,18 @@ const pad=n=>String(n).padStart(2,'0');
 function tick(){
   const d=bj(),h=hourNow();
   $('#clock').innerHTML=`${pad(d.getHours())}<span class="colon">:</span>${pad(d.getMinutes())}<span class="sec">${pad(d.getSeconds())}</span>`;
-  $('#cdate').textContent=`${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} 星期${WD[d.getDay()]}`;
+  $('#cdate').textContent=clockDate(d);
   $('#nowMark').style.left=(h/24*100)+'%';
   const left=24*60-(d.getHours()*60+d.getMinutes());
-  $('#dayPct').textContent=`今天已经过去 ${Math.floor(h/24*100)}%`;
-  $('#dayLeft').textContent=`距离今天结束还有 ${Math.floor(left/60)} 小时 ${left%60} 分`;
+  $('#dayPct').textContent=T('day_pct',{p:Math.floor(h/24*100)});
+  $('#dayLeft').textContent=T('day_left',{h:Math.floor(left/60),m:left%60});
   if(fmt(d)!==TODAY&&!tick.reloaded){tick.reloaded=true;location.reload()}  // 跨过午夜自动刷新到新的一天
   applyPhase();
 }
-$('#dtrack').onclick=e=>{const b=e.target.closest('.seg');if(!b)return;preview=PHASES[+b.dataset.i];applyPhase(true);toast(`预览：${preview.icon} ${preview.name}`)};
+$('#dtrack').onclick=e=>{const b=e.target.closest('.seg');if(!b)return;preview=PHASES[+b.dataset.i];applyPhase(true);toast(T('preview',{p:preview.icon+' '+T('ph_'+preview.key)}))};
 $('#followBtn').onclick=()=>{preview=null;applyPhase(true)};
+const catName=c=>{const v=T('cat_'+c);return v==='cat_'+c?c:v};
+addEventListener('langchange',()=>{buildTrack();renderOpts();renderAll();applyPhase(true);tick()});
 buildTrack();renderOpts();renderAll();applyPhase(true);tick();setInterval(tick,1000);
 </script>
 </body>

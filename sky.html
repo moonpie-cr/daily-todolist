@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>薄荷天空 · 3D Mint Sky</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#dff6ee; --glass:rgba(255,255,255,.60); --glass-line:rgba(255,255,255,.75);
+  --text:#1f3a33; --text2:#4f6b63; --mint:#21a87c; --mint-soft:rgba(79,209,165,.20);
+  --shadow:0 8px 30px rgba(20,60,50,.15); --thumb:#ffffff; --on-mint:#ffffff;
+  --high:#ff7a7a; --mid:#ffb84d; --low:#7cc4ff;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#101816; --glass:rgba(16,24,22,.58); --glass-line:rgba(255,255,255,.12);
+    --text:#e3f4ed; --text2:#9fbfb4; --mint:#6fe8bd; --mint-soft:rgba(111,232,189,.16);
+    --shadow:0 8px 30px rgba(0,0,0,.45); --thumb:#e3f4ed; --on-mint:#10201b;
+    --high:#ff8f8f; --mid:#ffc46b; --low:#8fceff; }
+}
+:root[data-theme="dark"]{ --bg:#101816; --glass:rgba(16,24,22,.58); --glass-line:rgba(255,255,255,.12);
+  --text:#e3f4ed; --text2:#9fbfb4; --mint:#6fe8bd; --mint-soft:rgba(111,232,189,.16);
+  --shadow:0 8px 30px rgba(0,0,0,.45); --thumb:#e3f4ed; --on-mint:#10201b;
+  --high:#ff8f8f; --mid:#ffc46b; --low:#8fceff; }
+:root[data-theme="light"]{ --bg:#dff6ee; --glass:rgba(255,255,255,.60); --glass-line:rgba(255,255,255,.75);
+  --text:#1f3a33; --text2:#4f6b63; --mint:#21a87c; --mint-soft:rgba(79,209,165,.20);
+  --shadow:0 8px 30px rgba(20,60,50,.15); --thumb:#ffffff; --on-mint:#ffffff;
+  --high:#ff7a7a; --mid:#ffb84d; --low:#7cc4ff; }
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+canvas{display:block;touch-action:none}
+#ui{position:fixed;inset:0;pointer-events:none}
+.panel{position:absolute;pointer-events:auto;background:var(--glass);border:1px solid var(--glass-line);
+  border-radius:20px;box-shadow:var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* 时钟卡 */
+.clockCard{left:18px;top:18px;padding:14px 18px;min-width:230px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--mint-soft);color:var(--mint);font-weight:600;
+  padding:4px 11px;border-radius:99px;font-size:13px}
+.digits{font-family:"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;
+  font-size:40px;font-weight:700;letter-spacing:2px;margin:8px 0 0;line-height:1.1}
+.digits small{font-size:20px;opacity:.7;margin-left:4px}
+.digits .colon{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:.25}}
+.sub{font-size:12px;color:var(--text2);margin-top:4px}
+.row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn{background:var(--mint-soft);color:var(--mint);padding:6px 12px;border-radius:12px;font-size:13px;font-weight:600;text-decoration:none;display:inline-block}
+.btn:hover{filter:brightness(1.08)}
+.btn.solid{background:var(--mint);color:var(--on-mint)}
+
+/* 待办卡 */
+.todoCard{right:18px;top:72px;width:300px;padding:14px 16px}
+.todoHead{display:flex;align-items:center;gap:8px;font-weight:700;width:100%;text-align:left;padding:0}
+.todoHead .cnt{margin-left:auto;font-weight:600;font-size:13px;color:var(--mint)}
+.todoHead .arr{font-size:12px;color:var(--text2);transition:transform .2s}
+.todoCard.collapsed .arr{transform:rotate(-90deg)}
+.todoCard.collapsed .todoBody{display:none}
+.todoBody{margin-top:10px}
+form{display:flex;gap:6px}
+form input{flex:1;min-width:0;border:1.5px solid var(--glass-line);background:var(--glass);border-radius:12px;padding:8px 10px;outline:none}
+form input:focus{border-color:var(--mint)}
+ul{list-style:none;margin:10px 0 0;padding:0;max-height:34vh;overflow:auto}
+li{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:10px;font-size:14px;cursor:pointer}
+li:hover{background:var(--mint-soft)}
+li .d{flex:none;width:12px;height:12px;border-radius:50%}
+li.done{opacity:.55;text-decoration:line-through}
+li.done .d{background:var(--mint)!important;box-shadow:0 0 8px var(--mint)}
+.empty{font-size:13px;color:var(--text2);padding:8px 2px}
+
+/* 时间条 */
+.timeCard{left:50%;bottom:18px;transform:translateX(-50%);width:min(680px,calc(100% - 36px));padding:12px 18px}
+.timeTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.timeTop b{font-variant-numeric:tabular-nums}
+.timeTop .sp{flex:1}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:99px;margin:12px 0 4px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--thumb);box-shadow:0 0 0 4px var(--mint-soft),0 2px 8px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:var(--thumb);box-shadow:0 0 0 4px var(--mint-soft),0 2px 8px rgba(0,0,0,.25)}
+.ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--text2)}
+
+.hint{position:absolute;left:18px;bottom:110px;font-size:12px;color:var(--text2);background:var(--glass);padding:6px 10px;border-radius:99px;backdrop-filter:blur(8px)}
+#label{position:absolute;pointer-events:none;transform:translate(-50%,-140%);background:var(--glass);border:1px solid var(--glass-line);
+  padding:6px 10px;border-radius:10px;font-size:13px;white-space:nowrap;box-shadow:var(--shadow);backdrop-filter:blur(10px);display:none}
+#label small{color:var(--text2);margin-left:6px}
+.toast{position:fixed;left:50%;top:22px;transform:translate(-50%,-20px);background:var(--mint);color:var(--on-mint);padding:9px 18px;border-radius:99px;
+  font-size:14px;opacity:0;transition:.3s;pointer-events:none;box-shadow:var(--shadow);z-index:5}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+#loading,#fallback{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px;background:var(--bg);z-index:9}
+#loading .sp{width:38px;height:38px;border-radius:50%;border:4px solid var(--mint-soft);border-top-color:var(--mint);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+
+
+/* 使用指南 */
+.guideBtn{right:18px;top:18px;padding:9px 16px;font-weight:700;font-size:14px;color:var(--mint)}
+.guide{right:18px;top:72px;width:330px;max-height:calc(100vh - 200px);overflow:auto;padding:16px 18px;z-index:3;display:none}
+.guide.open{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.guide h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center}
+.guide h3 button{margin-left:auto;font-size:16px;color:var(--text2);padding:2px 6px}
+.guide dl{margin:0;font-size:13px;line-height:1.65}
+.guide dt{font-weight:700;margin-top:10px}
+.guide dd{margin:2px 0 0;color:var(--text2)}
+.guide .tired{margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--mint-soft);border:1.5px dashed var(--mint);text-align:center}
+.guide .tired b{display:block;font-size:15px;color:var(--mint);margin-bottom:8px}
+.guide .note{font-size:12px;color:var(--text2);margin-top:12px;line-height:1.6}
+/* 天气切换 */
+.wx{display:inline-flex;background:var(--mint-soft);border-radius:12px;padding:3px;gap:2px}
+.wx button{padding:5px 10px;border-radius:9px;font-size:13px;color:var(--text2);font-weight:600}
+.wx button.on{background:var(--mint);color:var(--on-mint)}
+/* 荡秋千 */
+.panel,.hint{transition:opacity .6s}
+body.swinging .panel:not(#swingUI),body.swinging .hint{opacity:0;pointer-events:none}
+#swingUI{left:50%;bottom:26px;transform:translateX(-50%);padding:16px 22px;text-align:center;width:min(380px,calc(100% - 24px));
+  opacity:0;pointer-events:none;transition:opacity .8s}
+body.swinging #swingUI{opacity:1;pointer-events:auto}
+#swingUI .t1{font-weight:700;font-size:16px}
+#swingUI .t2{font-size:13px;color:var(--text2);margin:4px 0 12px}
+.breath{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;font-size:14px;font-weight:600;color:var(--mint)}
+.breath i{width:26px;height:26px;border-radius:50%;background:var(--mint);opacity:.75;animation:breathe 8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.55);opacity:.45}50%{transform:scale(1.15);opacity:.9}}
+#swingUI .row{justify-content:center}
+
+.wx button[data-lang]{padding:5px 9px}
+.guide dd:empty,.guide dt:empty{display:none}
+@media (max-width:760px){
+  .clockCard{left:10px;right:10px;top:10px;min-width:0;padding:10px 14px;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:10px}
+  .digits{font-size:28px;margin:4px 0 0}.digits small{font-size:15px}
+  .clockCard .row{grid-column:1/-1;margin-top:6px}
+  .todoCard{right:10px;left:10px;top:auto;bottom:118px;width:auto;padding:10px 14px}
+  ul{max-height:24vh}
+  .timeCard{bottom:10px;width:calc(100% - 20px);padding:10px 14px}
+  .hint{display:none}
+  .clockCard{right:66px}
+  .guideBtn{right:10px;top:10px;padding:0;width:46px;height:46px;font-size:0}
+  .guideBtn::before{content:"❔";font-size:20px}
+  .guide{left:10px;right:10px;top:66px;width:auto;max-height:calc(100vh - 210px)}
+  .wx button{padding:5px 8px}
+}
+</style>
+</head>
+<body data-doc="doc_sky">
+<div id="loading"><div class="sp"></div><div data-i18n="loading">正在搭建天空…</div></div>
+<div id="fallback" hidden>
+  <div style="font-size:40px">🌫</div>
+  <div data-i18n="fb1">3D 引擎没加载出来</div>
+  <div class="sub" style="max-width:420px" data-i18n="fb2">这个页面需要联网加载 Three.js，请检查网络后刷新。如果浏览器太旧，换成新版 Chrome / Edge / Safari 试试。</div>
+  <a class="btn solid" href="index.html" data-i18n="fb_back">← 回到薄荷待办</a>
+</div>
+
+<div id="ui">
+  <button class="panel guideBtn" id="guideBtn" data-i18n="guide_btn">❔ 使用指南</button>
+  <section class="panel guide" id="guide">
+    <h3><span data-i18n="guide_title">🌿 网站使用指南</span><button id="guideClose" title="关闭" data-i18n-title="close">✕</button></h3>
+    <dl>
+      <dt data-i18n="g1t">🖱 看风景</dt><dd data-i18n="g1d">拖动画面旋转视角，滚轮或双指缩放。左上角「⟳ 自动旋转」可以开关自动转圈。</dd>
+      <dt data-i18n="g2t">🪐 待办星球</dt><dd data-i18n="g2d">在右侧面板添加今天的待办，每件事会变成一颗绕岛飞的小星球。点星球或列表就能完成，全部完成会放烟花 🎉</dd>
+      <dt data-i18n="g3t">🕒 时间与天色</dt><dd data-i18n="g3d">天空跟着北京时间变化：清晨晨曦、黄昏落日、傍晚蓝调、夜晚粉调。拖动底部时间条可以预览任意时刻，「▶ 快进一天」20 秒看完日升日落。</dd>
+      <dt data-i18n="g4t">🌦 天气</dt><dd data-i18n="g4d">底部可以切换 ☀️ 晴、🌧 雨、❄️ 雪。下雪时小岛会慢慢变白，雨夜偶尔会打闪。</dd>
+      <dt data-i18n="g5t">📝 完整待办页</dt><dd data-i18n="g5d">左上角「📝 待办」进入完整待办页，可以设置优先级、分类、写心情小记，两边数据同步。</dd>
+      <dt data-i18n="g6t">◐ 主题</dt><dd data-i18n="g6d">左上角切换浅色和深色。</dd>
+      <dt data-i18n="g7t"></dt><dd data-i18n="g7d"></dd>
+    </dl>
+    <div class="tired">
+      <b data-i18n="tired">🪁 累了的话，可以去荡秋千</b>
+      <button class="btn solid" id="guideSwing" data-i18n="go_swing">去荡秋千</button>
+      <div class="note" style="margin-top:8px" data-i18n="tired_note">也可以直接点小岛边上的秋千</div>
+    </div>
+    <div class="note" data-i18n="privacy">🔒 待办只保存在你自己的浏览器里，不会上传。</div>
+  </section>
+  <section class="panel clockCard">
+    <div>
+      <span class="chip" id="phase">🌿 上午 · 薄荷</span>
+      <div class="digits" id="clock">--:--</div>
+      <div class="sub" id="date">北京时间</div>
+    </div>
+    <div class="row">
+      <a class="btn" href="index.html" data-i18n="sky_todo">📝 待办</a>
+      <button class="btn" id="themeBtn" data-i18n="btn_theme">◐ 主题</button>
+      <button class="btn" id="rotBtn" data-i18n="rot">⟳ 自动旋转</button>
+      <button class="btn" id="swingBtn" data-i18n="swing_btn">🪁 秋千</button>
+      <span class="wx"><button data-lang="zh">中</button><button data-lang="en">EN</button><button data-lang="ru">RU</button></span>
+    </div>
+  </section>
+
+  <section class="panel todoCard" id="todoCard">
+    <button class="todoHead" id="todoHead"><span class="arr">▼</span><span data-i18n="todo_head">🪐 今日待办星球</span><span class="cnt" id="cnt">0/0</span></button>
+    <div class="todoBody">
+      <form id="addForm"><input id="newText" data-i18n-ph="planet_ph" placeholder="添加一颗新星球…" autocomplete="off"><button class="btn solid">＋</button></form>
+      <ul id="list"></ul>
+    </div>
+  </section>
+
+  <div class="hint" data-i18n="hint">🖱 拖动旋转 · 滚轮缩放 · 点星球完成待办</div>
+
+  <section class="panel timeCard">
+    <div class="timeTop">
+      <span><span data-i18n="sky_time">🕒 天空时间</span> <b id="viewTime">--:--</b></span>
+      <span class="chip" id="modeTag">此刻</span>
+      <span class="wx" data-wxgroup><button data-w="clear" data-i18n="wx_clear">☀️ 晴</button><button data-w="rain" data-i18n="wx_rain">🌧 雨</button><button data-w="snow" data-i18n="wx_snow">❄️ 雪</button></span>
+      <span class="sp"></span>
+      <button class="btn" id="playBtn">▶ 快进一天</button>
+      <button class="btn" id="liveBtn" data-i18n="live">↺ 回到此刻</button>
+    </div>
+    <input type="range" id="slider" min="0" max="24" step="0.01" value="12">
+    <div class="ticks"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+  </section>
+  <section class="panel" id="swingUI">
+    <div class="t1" data-i18n="sw_t1">🪁 荡秋千中</div>
+    <div class="t2" data-i18n="sw_t2">累了就歇一会儿，看看天空和云海 🌿</div>
+    <div class="breath"><i></i><span id="breathTxt">吸气…</span></div>
+    <div class="row">
+      <span class="wx" data-wxgroup><button data-w="clear">☀️</button><button data-w="rain">🌧</button><button data-w="snow">❄️</button></span>
+      <button class="btn solid" id="swingExit" data-i18n="sw_exit">↩ 回到小岛</button>
+    </div>
+  </section>
+  <div id="label"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 多语言：中文 / English / Русский ===== */
+const I18N={"zh": {"doc_index": "每日待办 · Mint Daily", "doc_sky": "薄荷天空 · 3D Mint Sky", "btn_theme": "◐ 主题", "bj_time": "北京时间", "wd": ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], "wd_long": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], "ph_midnight": "深夜 · 星河", "ph_dawn": "清晨 · 晨曦", "ph_morning": "上午 · 薄荷", "ph_noon": "正午 · 晴光", "ph_after": "午后 · 湖青", "ph_dusk": "黄昏 · 落日", "ph_blue": "傍晚 · 蓝调", "ph_night": "夜晚 · 粉调", "ph_late": "深夜 · 星河", "tip_midnight": "夜深了，早点休息", "tip_dawn": "新的一天开始了", "tip_morning": "精力最好的时候，先做最难的事", "tip_noon": "吃饭午休，给自己充充电", "tip_after": "下午还长，再推进一两件事", "tip_dusk": "太阳下山了，看看今天完成了多少", "tip_blue": "蓝调时刻，收个尾吧", "tip_night": "复盘一下，写两句小记", "tip_late": "今天辛苦了，晚安", "greet": ["夜深了", "早上好", "中午好", "下午好", "晚上好"], "rel_today": "今天", "rel_tomorrow": "明天", "rel_yesterday": "昨天", "list_today": "今天的待办", "list_tomorrow": "明天的待办", "list_yesterday": "昨天的待办", "list_date": "{d}的待办", "btn_today": "回到今天", "btn_sky": "🪐 3D 天空", "clock_label": "北京时间 · UTC+8", "follow": "↺ 回到此刻配色", "day_pct": "今天已经过去 {p}%", "day_left": "距离今天结束还有 {h} 小时 {m} 分", "seg_title": "{p}（{a}–{b}）点击预览", "preview": "预览：{p}", "prev_week": "上一周", "next_week": "下一周", "add_ph": "今天要做什么？回车添加", "time_opt": "时间（可选）", "add_btn": "＋ 添加", "lbl_pri": "优先级", "lbl_cat": "分类", "pri_high": "重要", "pri_mid": "一般", "pri_low": "随意", "cat_学习": "学习", "cat_写稿": "写稿", "cat_采访": "采访", "cat_生活": "生活", "cat_运动": "运动", "cat_其他": "其他", "carry_txt": "🌱 之前还有 {n} 件事没做完", "carry_btn": "全部移到今天 →", "carry_toast": "已把 {n} 件事移到今天", "tab_all": "全部", "tab_todo": "未完成", "tab_done": "已完成", "list_sub": "{d} / {n} 已完成", "empty_alldone": "全部完成啦，给自己一点奖励吧！", "empty_here": "这里还空着", "empty_none": "还没有待办，写下第一件事吧", "t_done": "完成", "t_edit": "双击编辑", "t_star": "切换重要", "t_del": "删除", "h_progress": "🌱 今日进度", "pct_none": "还没有任务", "pct_all": "全部完成 ✨", "pct_half": "过半啦，加油", "pct_start": "好的开始", "pct_zero": "还没开始", "kpi_done": "已完成", "kpi_left": "待完成", "kpi_high": "重要未做", "h_cats": "🗂 分类完成度", "cats_empty": "添加任务后这里会显示各分类进度", "h_streak": "🔥 连续打卡", "streak_unit": "天全部完成", "streak_hint": "完成当天所有待办即打卡", "h_mood": "💭 今日心情 & 小记", "note_ph": "今天有什么想记下来的？", "toast_alldone": "🎉 今天的待办全部完成！", "toast_del": "已删除", "quotes": ["把大事拆小，把小事做完。", "今天的一小步，是明天的一大段路。", "先完成，再完美。", "专注一件事，胜过同时想十件事。", "你不需要很厉害才能开始，你需要开始才能很厉害。", "慢慢来，比较快。", "把最难的事放在精力最好的时候。"], "seed1": "欢迎使用薄荷待办 🌿 点左边圆圈完成任务", "seed2": "双击文字可以直接编辑", "seed3": "点 ☆ 可以把任务标为重要", "loading": "正在搭建天空…", "fb1": "3D 引擎没加载出来", "fb2": "这个页面需要联网加载 Three.js，请检查网络后刷新。如果浏览器太旧，换成新版 Chrome / Edge / Safari 试试。", "fb_back": "← 回到薄荷待办", "sky_todo": "📝 待办", "rot": "⟳ 自动旋转", "swing_btn": "🪁 秋千", "todo_head": "🪐 今日待办星球", "planet_ph": "添加一颗新星球…", "hint": "🖱 拖动旋转 · 滚轮缩放 · 点星球完成待办", "sky_time": "🕒 天空时间", "mode_live": "此刻", "mode_prev": "预览", "mode_ff": "快进中", "wx_clear": "☀️ 晴", "wx_rain": "🌧 雨", "wx_snow": "❄️ 雪", "play": "▶ 快进一天", "pause": "⏸ 暂停", "live": "↺ 回到此刻", "planet_empty": "今天还没有待办，在上面添加一颗星球吧 🌱", "lb_done": "已完成 · 点击取消", "lb_todo": "点击完成", "tst_done": "✨ 完成：{t}", "tst_undo": "↩ 取消完成：{t}", "tst_all": "🎉 今天的星球全部点亮了！", "tst_new": "🪐 新星球升空", "tst_clear": "☀️ 放晴了", "tst_rain": "🌧 下雨了，听听雨声吧", "tst_snow": "❄️ 下雪啦", "sseed1": "点我完成这颗星球 ✨", "sseed2": "拖动画面转一转", "sseed3": "拖底部时间条看日落", "guide_btn": "❔ 使用指南", "guide_title": "🌿 网站使用指南", "close": "关闭", "g1t": "🖱 看风景", "g1d": "拖动画面旋转视角，滚轮或双指缩放。左上角「⟳ 自动旋转」可以开关自动转圈。", "g2t": "🪐 待办星球", "g2d": "在右侧面板添加今天的待办，每件事会变成一颗绕岛飞的小星球。点星球或列表就能完成，全部完成会放烟花 🎉", "g3t": "🕒 时间与天色", "g3d": "天空跟着北京时间变化：清晨晨曦、黄昏落日、傍晚蓝调、夜晚粉调。拖动底部时间条可以预览任意时刻，「▶ 快进一天」20 秒看完日升日落。", "g4t": "🌦 天气", "g4d": "底部可以切换 ☀️ 晴、🌧 雨、❄️ 雪。下雪时小岛会慢慢变白，雨夜偶尔会打闪。", "g5t": "📝 完整待办页", "g5d": "左上角「📝 待办」进入完整待办页，可以设置优先级、分类、写心情小记，两边数据同步。", "g6t": "◐ 主题", "g6d": "左上角切换浅色和深色。", "g7t": "🌐 语言", "g7d": "左上角可以切换 中文 / EN / RU。", "tired": "🪁 累了的话，可以去荡秋千", "go_swing": "去荡秋千", "tired_note": "也可以直接点小岛边上的秋千", "privacy": "🔒 待办只保存在你自己的浏览器里，不会上传。", "sw_t1": "🪁 荡秋千中", "sw_t2": "累了就歇一会儿，看看天空和云海 🌿", "inhale": "吸气…", "exhale": "呼气…", "sw_exit": "↩ 回到小岛"}, "en": {"doc_index": "Mint Daily · To-dos", "doc_sky": "3D Mint Sky", "btn_theme": "◐ Theme", "bj_time": "Beijing Time", "wd": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], "wd_long": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "ph_midnight": "Late night · Starry sky", "ph_dawn": "Dawn · First light", "ph_morning": "Morning · Mint", "ph_noon": "Noon · Sunshine", "ph_after": "Afternoon · Lake blue", "ph_dusk": "Dusk · Sunset", "ph_blue": "Evening · Blue hour", "ph_night": "Night · Pink hour", "ph_late": "Late night · Starry sky", "tip_midnight": "It's late — get some rest", "tip_dawn": "A new day begins", "tip_morning": "Peak energy — do the hardest thing first", "tip_noon": "Lunch and a break — recharge", "tip_after": "Plenty of afternoon left — push one or two more things", "tip_dusk": "The sun is setting — see how much you've done", "tip_blue": "Blue hour — time to wrap up", "tip_night": "Look back on the day and jot a few notes", "tip_late": "You did well today. Good night", "greet": ["Still up?", "Good morning", "Good day", "Good afternoon", "Good evening"], "rel_today": "Today", "rel_tomorrow": "Tomorrow", "rel_yesterday": "Yesterday", "list_today": "Today's to-dos", "list_tomorrow": "Tomorrow's to-dos", "list_yesterday": "Yesterday's to-dos", "list_date": "To-dos for {d}", "btn_today": "Back to today", "btn_sky": "🪐 3D Sky", "clock_label": "Beijing Time · UTC+8", "follow": "↺ Back to current colors", "day_pct": "{p}% of today has passed", "day_left": "{h} h {m} min left today", "seg_title": "{p} ({a}–{b}) · click to preview", "preview": "Preview: {p}", "prev_week": "Previous week", "next_week": "Next week", "add_ph": "What's on today? Press Enter to add", "time_opt": "Time (optional)", "add_btn": "＋ Add", "lbl_pri": "Priority", "lbl_cat": "Category", "pri_high": "Important", "pri_mid": "Normal", "pri_low": "Whenever", "cat_学习": "Study", "cat_写稿": "Writing", "cat_采访": "Interview", "cat_生活": "Life", "cat_运动": "Exercise", "cat_其他": "Other", "carry_txt": "🌱 {n} unfinished task(s) from earlier", "carry_btn": "Move all to today →", "carry_toast": "Moved {n} task(s) to today", "tab_all": "All", "tab_todo": "To do", "tab_done": "Done", "list_sub": "{d} / {n} done", "empty_alldone": "All done — treat yourself!", "empty_here": "Nothing here yet", "empty_none": "No to-dos yet — write down the first one", "t_done": "Complete", "t_edit": "Double-click to edit", "t_star": "Toggle important", "t_del": "Delete", "h_progress": "🌱 Today's progress", "pct_none": "No tasks yet", "pct_all": "All done ✨", "pct_half": "Over halfway — keep going", "pct_start": "Good start", "pct_zero": "Not started yet", "kpi_done": "Done", "kpi_left": "To do", "kpi_high": "Important left", "h_cats": "🗂 By category", "cats_empty": "Add tasks to see progress by category", "h_streak": "🔥 Streak", "streak_unit": "day(s) with everything done", "streak_hint": "Finish all of a day's to-dos to keep it going", "h_mood": "💭 Mood & notes", "note_ph": "Anything you want to remember about today?", "toast_alldone": "🎉 All of today's to-dos are done!", "toast_del": "Deleted", "quotes": ["Break big things into small ones, then finish the small ones.", "A small step today is a long road tomorrow.", "Done first, perfect later.", "Focusing on one thing beats thinking about ten.", "You don't have to be great to start, but you have to start to be great.", "Slow is smooth, and smooth is fast.", "Save the hardest task for your best hours."], "seed1": "Welcome to Mint Daily 🌿 Click the circle on the left to complete a task", "seed2": "Double-click the text to edit it", "seed3": "Click ☆ to mark a task as important", "loading": "Building the sky…", "fb1": "The 3D engine didn't load", "fb2": "This page loads Three.js from the internet. Please check your connection and refresh. If your browser is old, try a recent Chrome, Edge or Safari.", "fb_back": "← Back to Mint Daily", "sky_todo": "📝 To-dos", "rot": "⟳ Auto-rotate", "swing_btn": "🪁 Swing", "todo_head": "🪐 Today's to-do planets", "planet_ph": "Add a new planet…", "hint": "🖱 Drag to rotate · Scroll to zoom · Click a planet to complete it", "sky_time": "🕒 Sky time", "mode_live": "Now", "mode_prev": "Preview", "mode_ff": "Fast-forwarding", "wx_clear": "☀️ Clear", "wx_rain": "🌧 Rain", "wx_snow": "❄️ Snow", "play": "▶ Fast-forward a day", "pause": "⏸ Pause", "live": "↺ Back to now", "planet_empty": "No to-dos yet today — add a planet above 🌱", "lb_done": "Done · click to undo", "lb_todo": "Click to complete", "tst_done": "✨ Done: {t}", "tst_undo": "↩ Undone: {t}", "tst_all": "🎉 All of today's planets are lit!", "tst_new": "🪐 A new planet takes off", "tst_clear": "☀️ The sky has cleared", "tst_rain": "🌧 It's raining — listen to the rain", "tst_snow": "❄️ It's snowing!", "sseed1": "Click me to complete this planet ✨", "sseed2": "Drag the view to look around", "sseed3": "Drag the time bar to watch the sunset", "guide_btn": "❔ How to use", "guide_title": "🌿 How to use this site", "close": "Close", "g1t": "🖱 Look around", "g1d": "Drag to rotate the view; scroll or pinch to zoom. \"⟳ Auto-rotate\" (top left) turns the slow spin on or off.", "g2t": "🪐 To-do planets", "g2d": "Add today's to-dos in the panel on the right — each one becomes a little planet orbiting the island. Click a planet or a list item to complete it. Finish them all for fireworks 🎉", "g3t": "🕒 Time & sky colors", "g3d": "The sky follows Beijing time: first light at dawn, sunset at dusk, the blue hour in the evening and pink tones at night. Drag the time bar at the bottom to preview any moment, or tap \"▶ Fast-forward a day\" to watch a whole day in 20 seconds.", "g4t": "🌦 Weather", "g4d": "Switch between ☀️ Clear, 🌧 Rain and ❄️ Snow at the bottom. In snow the island slowly turns white; on rainy nights there's the occasional flash of lightning.", "g5t": "📝 Full to-do page", "g5d": "\"📝 To-dos\" (top left) opens the full to-do page, where you can set priorities and categories and write mood notes. Both pages share the same data.", "g6t": "◐ Theme", "g6d": "Switch between light and dark mode (top left).", "g7t": "🌐 Language", "g7d": "Switch between 中文 / EN / RU (top left).", "tired": "🪁 Tired? Go sit on the swing", "go_swing": "Go swing", "tired_note": "You can also just click the swing at the edge of the island", "privacy": "🔒 Your to-dos stay in your own browser and are never uploaded.", "sw_t1": "🪁 On the swing", "sw_t2": "Take a break and watch the sky and the sea of clouds 🌿", "inhale": "Breathe in…", "exhale": "Breathe out…", "sw_exit": "↩ Back to the island"}, "ru": {"doc_index": "Mint Daily · Задачи", "doc_sky": "Мятное небо · 3D", "btn_theme": "◐ Тема", "bj_time": "Пекинское время", "wd": ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], "wd_long": ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], "ph_midnight": "Глубокая ночь · Звёзды", "ph_dawn": "Рассвет · Заря", "ph_morning": "Утро · Мята", "ph_noon": "Полдень · Солнце", "ph_after": "День · Озёрная лазурь", "ph_dusk": "Сумерки · Закат", "ph_blue": "Вечер · Синий час", "ph_night": "Ночь · Розовые тона", "ph_late": "Глубокая ночь · Звёзды", "tip_midnight": "Уже поздно, пора отдыхать", "tip_dawn": "Начинается новый день", "tip_morning": "Пик энергии — начните с самого трудного", "tip_noon": "Обед и отдых — подзарядитесь", "tip_after": "Впереди ещё полдня — сделайте ещё пару дел", "tip_dusk": "Солнце садится — посмотрите, сколько сделано", "tip_blue": "Синий час — пора закругляться", "tip_night": "Подведите итоги и запишите пару мыслей", "tip_late": "Вы хорошо потрудились. Спокойной ночи", "greet": ["Доброй ночи", "Доброе утро", "Добрый день", "Добрый день", "Добрый вечер"], "rel_today": "Сегодня", "rel_tomorrow": "Завтра", "rel_yesterday": "Вчера", "list_today": "Задачи на сегодня", "list_tomorrow": "Задачи на завтра", "list_yesterday": "Вчерашние задачи", "list_date": "Задачи на {d}", "btn_today": "К сегодня", "btn_sky": "🪐 3D-небо", "clock_label": "Пекинское время · UTC+8", "follow": "↺ Вернуть текущие цвета", "day_pct": "Прошло {p}% дня", "day_left": "До конца дня {h} ч {m} мин", "seg_title": "{p} ({a}–{b}) · нажмите для просмотра", "preview": "Просмотр: {p}", "prev_week": "Прошлая неделя", "next_week": "Следующая неделя", "add_ph": "Что сделать сегодня? Нажмите Enter", "time_opt": "Время (необязательно)", "add_btn": "＋ Добавить", "lbl_pri": "Приоритет", "lbl_cat": "Категория", "pri_high": "Важно", "pri_mid": "Обычно", "pri_low": "Не срочно", "cat_学习": "Учёба", "cat_写稿": "Тексты", "cat_采访": "Интервью", "cat_生活": "Быт", "cat_运动": "Спорт", "cat_其他": "Другое", "carry_txt": "🌱 Незавершённых задач с прошлых дней: {n}", "carry_btn": "Перенести на сегодня →", "carry_toast": "Перенесено на сегодня: {n}", "tab_all": "Все", "tab_todo": "Активные", "tab_done": "Готово", "list_sub": "Готово: {d} / {n}", "empty_alldone": "Всё сделано — побалуйте себя!", "empty_here": "Пока пусто", "empty_none": "Задач пока нет — запишите первую", "t_done": "Выполнить", "t_edit": "Дважды нажмите, чтобы изменить", "t_star": "Отметить как важное", "t_del": "Удалить", "h_progress": "🌱 Прогресс дня", "pct_none": "Задач пока нет", "pct_all": "Всё готово ✨", "pct_half": "Больше половины — так держать", "pct_start": "Хорошее начало", "pct_zero": "Ещё не начато", "kpi_done": "Готово", "kpi_left": "Осталось", "kpi_high": "Важные", "h_cats": "🗂 По категориям", "cats_empty": "Добавьте задачи, чтобы увидеть прогресс по категориям", "h_streak": "🔥 Серия", "streak_unit": "дн. подряд всё выполнено", "streak_hint": "Выполните все задачи дня, чтобы продлить серию", "h_mood": "💭 Настроение и заметки", "note_ph": "Что хочется запомнить о сегодняшнем дне?", "toast_alldone": "🎉 Все задачи на сегодня выполнены!", "toast_del": "Удалено", "quotes": ["Разбейте большое на малое — и доделайте малое.", "Маленький шаг сегодня — большой путь завтра.", "Сначала сделать, потом улучшить.", "Сосредоточиться на одном лучше, чем думать о десяти.", "Не нужно быть великим, чтобы начать, но нужно начать, чтобы стать великим.", "Тише едешь — дальше будешь.", "Самое трудное — на часы, когда больше всего сил."], "seed1": "Добро пожаловать в Mint Daily 🌿 Нажмите на кружок слева, чтобы выполнить задачу", "seed2": "Дважды нажмите на текст, чтобы изменить его", "seed3": "Нажмите ☆, чтобы отметить задачу как важную", "loading": "Строим небо…", "fb1": "Не удалось загрузить 3D-движок", "fb2": "Эта страница загружает Three.js из интернета. Проверьте подключение и обновите страницу. Если браузер устарел, попробуйте свежий Chrome, Edge или Safari.", "fb_back": "← Назад к Mint Daily", "sky_todo": "📝 Задачи", "rot": "⟳ Автоповорот", "swing_btn": "🪁 Качели", "todo_head": "🪐 Планеты задач", "planet_ph": "Новая планета…", "hint": "🖱 Тяните — вращение · Колёсико — масштаб · Нажмите на планету, чтобы выполнить задачу", "sky_time": "🕒 Время неба", "mode_live": "Сейчас", "mode_prev": "Просмотр", "mode_ff": "Перемотка", "wx_clear": "☀️ Ясно", "wx_rain": "🌧 Дождь", "wx_snow": "❄️ Снег", "play": "▶ Прокрутить день", "pause": "⏸ Пауза", "live": "↺ Вернуться в сейчас", "planet_empty": "Задач пока нет — добавьте планету выше 🌱", "lb_done": "Готово · нажмите, чтобы отменить", "lb_todo": "Нажмите, чтобы выполнить", "tst_done": "✨ Готово: {t}", "tst_undo": "↩ Отменено: {t}", "tst_all": "🎉 Все планеты на сегодня зажглись!", "tst_new": "🪐 Новая планета взлетела", "tst_clear": "☀️ Прояснилось", "tst_rain": "🌧 Пошёл дождь — послушайте его", "tst_snow": "❄️ Пошёл снег!", "sseed1": "Нажмите на меня, чтобы выполнить ✨", "sseed2": "Потяните экран, чтобы осмотреться", "sseed3": "Потяните шкалу времени, чтобы увидеть закат", "guide_btn": "❔ Как пользоваться", "guide_title": "🌿 Как пользоваться сайтом", "close": "Закрыть", "g1t": "🖱 Осмотреться", "g1d": "Тяните, чтобы повернуть вид; колёсико или два пальца — масштаб. Кнопка «⟳ Автоповорот» слева вверху включает и выключает вращение.", "g2t": "🪐 Планеты задач", "g2d": "Добавляйте задачи на сегодня в панели справа — каждая станет маленькой планетой вокруг острова. Нажмите на планету или пункт списка, чтобы выполнить задачу. Выполните все — будет салют 🎉", "g3t": "🕒 Время и цвет неба", "g3d": "Небо меняется по пекинскому времени: заря на рассвете, закат в сумерках, синий час вечером и розовые тона ночью. Потяните шкалу времени внизу, чтобы увидеть любой момент, или нажмите «▶ Прокрутить день» — весь день за 20 секунд.", "g4t": "🌦 Погода", "g4d": "Внизу можно выбрать ☀️ Ясно, 🌧 Дождь или ❄️ Снег. В снег остров постепенно белеет, а дождливой ночью иногда сверкает молния.", "g5t": "📝 Полная страница задач", "g5d": "«📝 Задачи» слева вверху открывает полную страницу задач: приоритеты, категории, настроение и заметки. Данные на обеих страницах общие.", "g6t": "◐ Тема", "g6d": "Светлая и тёмная тема переключаются слева вверху.", "g7t": "🌐 Язык", "g7d": "Язык переключается слева вверху: 中文 / EN / RU.", "tired": "🪁 Устали? Покачайтесь на качелях", "go_swing": "На качели", "tired_note": "Можно и просто нажать на качели у края острова", "privacy": "🔒 Задачи хранятся только в вашем браузере и никуда не отправляются.", "sw_t1": "🪁 На качелях", "sw_t2": "Отдохните и посмотрите на небо и море облаков 🌿", "inhale": "Вдох…", "exhale": "Выдох…", "sw_exit": "↩ Назад на остров"}};
+const LANGS=['zh','en','ru'],LANG_KEY='mint-daily-v1-lang',LOC={zh:'zh-CN',en:'en-US',ru:'ru-RU'};
+let LANG=(()=>{try{const v=localStorage.getItem(LANG_KEY);if(LANGS.includes(v))return v}catch(e){}
+  const n=(navigator.language||'zh').toLowerCase();return n.startsWith('ru')?'ru':n.startsWith('zh')?'zh':'en'})();
+function T(key,p){let s=I18N[LANG][key];if(s===undefined)s=I18N.zh[key];if(s===undefined)return key;
+  if(p&&typeof s==='string')for(const x in p)s=s.split('{'+x+'}').join(p[x]);return s}
+function longDate(d){if(LANG==='zh')return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · ${T('wd_long')[d.getDay()]}`;
+  return new Intl.DateTimeFormat(LOC[LANG],{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(d)}
+function shortDate(d){if(LANG==='zh')return `${d.getMonth()+1}月${d.getDate()}日`;
+  return new Intl.DateTimeFormat(LOC[LANG],{month:'long',day:'numeric'}).format(d)}
+function clockDate(d){const p=n=>String(n).padStart(2,'0');
+  if(LANG==='zh')return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${T('wd_long')[d.getDay()]}`;
+  if(LANG==='ru')return `${T('wd')[d.getDay()]}, ${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`;
+  return `${T('wd')[d.getDay()]}, ${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())}`}
+function applyI18n(){
+  document.documentElement.lang=LOC[LANG];
+  document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=T(e.dataset.i18n));
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>e.placeholder=T(e.dataset.i18nPh));
+  document.querySelectorAll('[data-i18n-title]').forEach(e=>e.title=T(e.dataset.i18nTitle));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  if(document.body.dataset.doc)document.title=T(document.body.dataset.doc);
+}
+function setLang(l){if(!LANGS.includes(l))return;LANG=l;try{localStorage.setItem(LANG_KEY,l)}catch(e){}
+  applyI18n();window.dispatchEvent(new Event('langchange'))}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(b)setLang(b.dataset.lang)});
+window.addEventListener('storage',e=>{if(e.key===LANG_KEY&&LANGS.includes(e.newValue)&&e.newValue!==LANG)setLang(e.newValue)});
+applyI18n();
+</script>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+const $=s=>document.querySelector(s);
+let THREE,OrbitControls;
+try{
+  THREE=await import('three');
+  ({OrbitControls}=await import('three/addons/controls/OrbitControls.js'));
+}catch(e){ $('#loading').hidden=true; $('#fallback').hidden=false; throw e; }
+
+/* ========== 基础工具 ========== */
+const KEY='mint-daily-v1';
+const pad=n=>String(n).padStart(2,'0');
+const bj=()=>{const n=new Date();return new Date(n.getTime()+n.getTimezoneOffset()*60000+8*3600000)};
+const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const WD='日一二三四五六';
+const hourNow=()=>{const d=bj();return d.getHours()+d.getMinutes()/60+d.getSeconds()/3600};
+const hf=h=>`${pad(Math.floor(h)%24)}:${pad(Math.floor((h%1)*60))}`;
+const smooth=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
+const easeOutBack=x=>{const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1800)}
+
+/* ========== 数据（和薄荷待办共用） ========== */
+let mem=null;
+function loadState(){
+  try{const s=JSON.parse(store.get(KEY));if(s&&s.days)return s}catch(e){}
+  if(mem)return mem;
+  const s={days:{}};
+  s.days[fmt(bj())]={tasks:[
+    {id:uid(),text:T('sseed1'),done:false,pri:'high',cat:'其他',time:''},
+    {id:uid(),text:T('sseed2'),done:false,pri:'mid',cat:'其他',time:''},
+    {id:uid(),text:T('sseed3'),done:false,pri:'low',cat:'其他',time:''}
+  ],note:'',mood:''};
+  mem=s;return s;
+}
+function saveState(s){mem=s;store.set(KEY,JSON.stringify(s))}
+const todayTasks=()=>{const d=loadState().days[fmt(bj())];return d?d.tasks:[]};
+function mutateToday(fn){const s=loadState(),k=fmt(bj());if(!s.days[k])s.days[k]={tasks:[],note:'',mood:''};fn(s.days[k].tasks);saveState(s)}
+
+/* ========== 天色关键帧（北京时间） ========== */
+const KF=[
+  {h:0,   top:'#070b24',mid:'#1c2058',bot:'#3e3178'},
+  {h:4.8, top:'#141d4a',mid:'#3b3f8f',bot:'#7a5a9a'},
+  {h:6,   top:'#5d7fc4',mid:'#f2a9b8',bot:'#ffc2a0'},
+  {h:7.5, top:'#6fc4e0',mid:'#bdf0dc',bot:'#fff0d6'},
+  {h:9.5, top:'#4fc6c8',mid:'#a6f0d6',bot:'#e9fbf3'},
+  {h:12.5,top:'#45b4e2',mid:'#b8f0cf',bot:'#f3ffe2'},
+  {h:15.5,top:'#3a9fc4',mid:'#8fe3d8',bot:'#e3fbf6'},
+  {h:17.3,top:'#c46aa8',mid:'#ff9f6e',bot:'#ffd27a'},
+  {h:18.6,top:'#2b3a8f',mid:'#5b6fe0',bot:'#b48ae0'},
+  {h:20.5,top:'#3a2a72',mid:'#a46fd0',bot:'#f59ac8'},
+  {h:23,  top:'#120f3a',mid:'#2c3470',bot:'#5a4fa8'},
+  {h:24,  top:'#070b24',mid:'#1c2058',bot:'#3e3178'}
+].map(k=>({h:k.h,top:new THREE.Color(k.top),mid:new THREE.Color(k.mid),bot:new THREE.Color(k.bot),hex:k}));
+const PHASES=[
+  {from:0,to:5,name:'深夜 · 星河',icon:'🌌'},{from:5,to:7,name:'清晨 · 晨曦',icon:'🌅'},
+  {from:7,to:11,name:'上午 · 薄荷',icon:'🌿'},{from:11,to:14,name:'正午 · 晴光',icon:'☀️'},
+  {from:14,to:17,name:'午后 · 湖青',icon:'🍃'},{from:17,to:18.5,name:'黄昏 · 落日',icon:'🌇'},
+  {from:18.5,to:20,name:'傍晚 · 蓝调',icon:'🌆'},{from:20,to:23,name:'夜晚 · 粉调',icon:'🌙'},
+  {from:23,to:24,name:'深夜 · 星河',icon:'🌌'}];
+PHASES.forEach((p,i)=>p.key=['midnight','dawn','morning','noon','after','dusk','blue','night','late'][i]);
+const cTop=new THREE.Color(),cMid=new THREE.Color(),cBot=new THREE.Color();
+function skyAt(h){
+  let i=0;while(i<KF.length-2&&h>=KF[i+1].h)i++;
+  const a=KF[i],b=KF[i+1],t=smooth(0,1,(h-a.h)/(b.h-a.h));
+  cTop.lerpColors(a.top,b.top,t);cMid.lerpColors(a.mid,b.mid,t);cBot.lerpColors(a.bot,b.bot,t);
+}
+
+/* ========== 场景 ========== */
+const W=()=>innerWidth,H=()=>innerHeight;
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W(),H());
+document.body.prepend(renderer.domElement);
+const canvas=renderer.domElement;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,W()/H(),0.1,800);
+camera.position.set(0,7,W()<760?38:27);
+const controls=new OrbitControls(camera,canvas);
+controls.target.set(0,1,0);controls.enableDamping=true;controls.minDistance=12;controls.maxDistance=70;
+controls.maxPolarAngle=Math.PI*0.66;controls.autoRotate=true;controls.autoRotateSpeed=0.35;controls.enablePan=false;
+controls.addEventListener('start',()=>{controls.autoRotate=false;rotBtnSync()});
+
+/* 天空球（渐变着色器） */
+const skyMat=new THREE.ShaderMaterial({
+  side:THREE.BackSide,depthWrite:false,
+  uniforms:{top:{value:new THREE.Color()},mid:{value:new THREE.Color()},bot:{value:new THREE.Color()},
+    sunDir:{value:new THREE.Vector3(0,1,0)},glow:{value:new THREE.Color('#fff2c4')},glowStr:{value:1}},
+  vertexShader:`varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform vec3 top,mid,bot,glow;uniform vec3 sunDir;uniform float glowStr;varying vec3 vP;
+    void main(){float h=vP.y;vec3 c=mix(bot,mid,smoothstep(-0.08,0.28,h));c=mix(c,top,smoothstep(0.28,0.9,h));
+      c=mix(c,bot*0.75,smoothstep(0.0,-0.6,h));
+      float g=max(dot(vP,normalize(sunDir)),0.0);c+=glow*(pow(g,18.0)*0.55+pow(g,180.0)*0.6)*glowStr;
+      gl_FragColor=vec4(c,1.0);
+      #include <colorspace_fragment>
+    }`
+});
+const sky=new THREE.Mesh(new THREE.SphereGeometry(300,48,32),skyMat);scene.add(sky);
+
+/* 光晕贴图 */
+function glowTexture(){
+  const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  const r=g.createRadialGradient(64,64,0,64,64,64);
+  r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.25,'rgba(255,255,255,.55)');r.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=r;g.fillRect(0,0,128,128);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
+}
+const glowTex=glowTexture();
+const mkGlow=(col,s)=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:col,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));sp.scale.set(s,s,1);return sp};
+
+/* 太阳 & 月亮 */
+const sun=new THREE.Group();
+sun.add(new THREE.Mesh(new THREE.SphereGeometry(3.2,32,16),new THREE.MeshBasicMaterial({color:'#fff4cc'})));
+const sunGlow=mkGlow('#ffd27a',26);sun.add(sunGlow);scene.add(sun);
+const moon=new THREE.Group();
+moon.add(new THREE.Mesh(new THREE.SphereGeometry(2.3,32,16),new THREE.MeshBasicMaterial({color:'#f4f0ff'})));
+moon.add(mkGlow('#c9b8ff',14));scene.add(moon);
+
+/* 星星 */
+const starGeo=new THREE.BufferGeometry();{
+  const n=1600,p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const u=Math.random()*Math.PI*2,v=Math.acos(Math.random()*1.1-0.1),r=260;
+    p[i*3]=r*Math.sin(v)*Math.cos(u);p[i*3+1]=r*Math.cos(v);p[i*3+2]=r*Math.sin(v)*Math.sin(u);}
+  starGeo.setAttribute('position',new THREE.BufferAttribute(p,3));}
+const starMat=new THREE.PointsMaterial({color:'#ffffff',size:2,sizeAttenuation:false,transparent:true,depthWrite:false});
+scene.add(new THREE.Points(starGeo,starMat));
+
+/* 光照 */
+const hemi=new THREE.HemisphereLight('#ffffff','#88ccaa',1);scene.add(hemi);
+const sunLight=new THREE.DirectionalLight('#fff3dd',2);scene.add(sunLight);
+const moonLight=new THREE.DirectionalLight('#b9b4ff',0.5);scene.add(moonLight);
+
+/* 漂浮小岛 */
+const island=new THREE.Group();scene.add(island);
+const std=(c,o={})=>new THREE.MeshStandardMaterial({color:c,flatShading:true,roughness:.85,...o});
+const grass=new THREE.Mesh(new THREE.CylinderGeometry(7,6.6,1.1,10),std('#7ee8c3'));island.add(grass);
+const dirt=new THREE.Mesh(new THREE.CylinderGeometry(6.6,5.2,1.3,10),std('#d8b896'));dirt.position.y=-1.2;island.add(dirt);
+const rock=new THREE.Mesh(new THREE.ConeGeometry(5.2,7,10),std('#a8968a'));rock.rotation.x=Math.PI;rock.position.y=-5.35;island.add(rock);
+const TREE=['#4fd1a5','#33bfa0','#21a87c','#6fdcaa'];
+[[-3.0,-3.4],[-2.6,2.6],[3.6,1.8],[4.4,-1.6],[1.2,-4.2],[-5.0,0.6],[0.6,4.4],[-1.4,-4.6]].forEach(([x,z],i)=>{
+  const t=new THREE.Group(),s=0.8+(i%3)*0.22;
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.14,.2,.9,6),std('#8b6b4a'));trunk.position.y=.45;t.add(trunk);
+  const c1=new THREE.Mesh(new THREE.ConeGeometry(1,1.9,7),std(TREE[i%4]));c1.position.y=1.5;t.add(c1);
+  const c2=new THREE.Mesh(new THREE.ConeGeometry(.72,1.4,7),std(TREE[(i+1)%4]));c2.position.y=2.3;t.add(c2);
+  t.position.set(x,.55,z);t.scale.setScalar(s);t.rotation.y=i;island.add(t);
+});
+/* 小屋 */
+const house=new THREE.Group();
+const wall=new THREE.Mesh(new THREE.BoxGeometry(2,1.5,1.7),std('#fff6ea'));wall.position.y=.75;house.add(wall);
+const roof=new THREE.Mesh(new THREE.ConeGeometry(1.75,1.2,4),std('#ff9aa2'));roof.position.y=2.1;roof.rotation.y=Math.PI/4;house.add(roof);
+const winMat=new THREE.MeshStandardMaterial({color:'#ffe9a8',emissive:'#ffc85a',emissiveIntensity:0});
+const win=new THREE.Mesh(new THREE.PlaneGeometry(.55,.5),winMat);win.position.set(0,.85,.86);house.add(win);
+const door=new THREE.Mesh(new THREE.PlaneGeometry(.45,.8),std('#c48a6a'));door.position.set(.62,.4,.86);house.add(door);
+house.position.set(.4,.55,.6);house.rotation.y=-.35;island.add(house);
+const winGlow=mkGlow('#ffc85a',3);winGlow.position.set(0,.85,1.1);house.add(winGlow);
+
+/* 云 */
+const cloudMat=new THREE.MeshStandardMaterial({color:'#ffffff',flatShading:true,roughness:1,transparent:true,opacity:.92});
+const clouds=[];
+for(let i=0;i<12;i++){
+  const g=new THREE.Group();
+  for(let j=0;j<5;j++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1+Math.random()*1.1,0),cloudMat);
+    m.position.set(j*1.3-2.6,Math.random()*.6,Math.random()*1.2);m.scale.y=.75;g.add(m);}
+  g.position.set(-66+i*11,4+Math.random()*14,-34+Math.random()*60);
+  g.userData.v=.6+Math.random()*.8;g.scale.setScalar(.8+Math.random()*.7);scene.add(g);clouds.push(g);
+}
+
+/* 薄荷光点 */
+const motes=(()=>{const n=260,p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){p[i*3]=(Math.random()-.5)*40;p[i*3+1]=Math.random()*24-10;p[i*3+2]=(Math.random()-.5)*40}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const pts=new THREE.Points(g,new THREE.PointsMaterial({map:glowTex,color:'#bff5e0',size:.55,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.8}));
+  scene.add(pts);return pts})();
+
+
+/* ========== 丰富场景 ========== */
+let dayF=1;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+scene.fog=new THREE.Fog('#bdf0dc',55,230);
+[sun,moon].forEach(g=>g.traverse(m=>{if(m.material)m.material.fog=false}));
+starMat.fog=false;skyMat.fog=false;
+
+/* 云海：填满小岛下方 */
+const seaMat=cloudMat;
+for(let i=0;i<70;i++){
+  const a=Math.random()*Math.PI*2,r=rnd(8,130);
+  const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),seaMat);
+  const sc=rnd(3.5,9)*(r<30?.7:1);
+  m.scale.set(sc,sc*.42,sc);m.position.set(Math.cos(a)*r,rnd(-20,-16)+r*.02,Math.sin(a)*r);
+  scene.add(m);
+}
+
+/* 小岛上的细节 */
+const PET=['#ff9aa2','#ffd166','#ffffff','#c9b8ff','#ffb3d9','#a0e7ff'];
+const flowerGeo=new THREE.IcosahedronGeometry(.13,0),stemGeo=new THREE.CylinderGeometry(.02,.02,.22,4);
+const stemMat=std('#3aa57f');
+for(let i=0;i<46;i++){
+  let x,z,ok=false;
+  for(let k=0;k<20&&!ok;k++){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*6.1;x=Math.cos(a)*r;z=Math.sin(a)*r;
+    ok=Math.hypot(x-.4,z-.6)>1.8&&Math.hypot(x+2,z+1)>1.6&&Math.hypot(x-3.2,z+3.4)>1.1&&Math.hypot(x+4.5,z-3.33)>1.8}
+  if(!ok)continue;
+  const f=new THREE.Group();
+  const st=new THREE.Mesh(stemGeo,stemMat);st.position.y=.11;f.add(st);
+  const fl=new THREE.Mesh(flowerGeo,std(PET[i%PET.length],{emissive:PET[i%PET.length],emissiveIntensity:.08}));fl.position.y=.25;f.add(fl);
+  f.position.set(x,.55,z);island.add(f);
+}
+/* 池塘 + 小溪 + 瀑布 */
+const pondMat=new THREE.MeshStandardMaterial({color:'#8fd8ff',roughness:.15,metalness:.3,transparent:true,opacity:.92});
+const pond=new THREE.Mesh(new THREE.CircleGeometry(1.25,20),pondMat);pond.rotation.x=-Math.PI/2;pond.position.set(-2,.57,-1);island.add(pond);
+const rim=new THREE.Mesh(new THREE.TorusGeometry(1.3,.12,6,20),std('#b8aea6'));rim.rotation.x=-Math.PI/2;rim.position.copy(pond.position);island.add(rim);
+const fallX=-6.3,fallZ=-2.2;
+{const dx=fallX-(-2),dz=fallZ-(-1),len=Math.hypot(dx,dz);
+  const stream=new THREE.Mesh(new THREE.PlaneGeometry(len,.45),pondMat);stream.rotation.x=-Math.PI/2;
+  stream.rotation.z=-Math.atan2(dz,dx);stream.position.set((-2+fallX)/2,.575,(-1+fallZ)/2);island.add(stream);}
+const lily=new THREE.Mesh(new THREE.CircleGeometry(.22,8),std('#4fd1a5'));lily.rotation.x=-Math.PI/2;lily.position.set(-1.6,.585,-.7);island.add(lily);
+const fallN=260,fallP=new Float32Array(fallN*3),fallV=new Float32Array(fallN);
+for(let i=0;i<fallN;i++){fallP[i*3]=fallX+rnd(-.25,.25);fallP[i*3+1]=rnd(-14,.5);fallP[i*3+2]=fallZ+rnd(-.25,.25);fallV[i]=rnd(3,6)}
+const fallGeo=new THREE.BufferGeometry();fallGeo.setAttribute('position',new THREE.BufferAttribute(fallP,3));
+const fall=new THREE.Points(fallGeo,new THREE.PointsMaterial({map:glowTex,color:'#d6f3ff',size:.45,transparent:true,depthWrite:false,opacity:.9}));
+island.add(fall);
+const mist=mkGlow('#ffffff',7);mist.position.set(fallX-.4,-12,fallZ-.2);mist.material.opacity=.5;island.add(mist);
+
+/* 风车 */
+const mill=new THREE.Group();
+const tower=new THREE.Mesh(new THREE.CylinderGeometry(.32,.62,3.2,8),std('#fff6ea'));tower.position.y=1.6;mill.add(tower);
+const mroof=new THREE.Mesh(new THREE.ConeGeometry(.55,.8,8),std('#7ee8c3'));mroof.position.y=3.6;mill.add(mroof);
+const blades=new THREE.Group();blades.position.set(0,3.05,.45);
+for(let i=0;i<4;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(.22,1.7,.04),std(i%2?'#ffffff':'#ff9aa2'));b.position.y=.9;
+  const arm=new THREE.Group();arm.rotation.z=i*Math.PI/2;arm.add(b);blades.add(arm)}
+blades.add(new THREE.Mesh(new THREE.SphereGeometry(.14,8,6),std('#8b6b4a')));
+mill.add(blades);mill.position.set(3.2,.55,-3.4);mill.rotation.y=-.5;island.add(mill);
+
+/* 蘑菇 */
+[[3.4,3.4,1],[3.95,2.85,.7],[-4.4,-0.2,.85]].forEach(([x,z,s])=>{
+  const m=new THREE.Group();
+  const st=new THREE.Mesh(new THREE.CylinderGeometry(.1,.14,.4,6),std('#fff6ea'));st.position.y=.2;m.add(st);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.32,10,6,0,Math.PI*2,0,Math.PI/2),std('#ff7a8a'));cap.position.y=.38;m.add(cap);
+  for(let k=0;k<3;k++){const d=new THREE.Mesh(new THREE.SphereGeometry(.05,5,4),std('#ffffff'));const a=k*2.1;d.position.set(Math.cos(a)*.2,.58,Math.sin(a)*.2);m.add(d)}
+  m.position.set(x,.55,z);m.scale.setScalar(s);island.add(m)});
+
+/* 石板小路 */
+for(let i=0;i<6;i++){const st=new THREE.Mesh(new THREE.CylinderGeometry(.32,.36,.08,7),std('#d8d2cc'));
+  st.position.set(1.15+i*.28,.58,1.6+i*.78);st.rotation.y=i;island.add(st)}
+
+/* 路灯 + 长椅 */
+const lamp=new THREE.Group();
+const pole=new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,1.9,6),std('#5b6b66'));pole.position.y=.95;lamp.add(pole);
+const bulbMat=new THREE.MeshStandardMaterial({color:'#fff3c4',emissive:'#ffc85a',emissiveIntensity:0});
+const bulb=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),bulbMat);bulb.position.y=2;lamp.add(bulb);
+const lampGlow=mkGlow('#ffc85a',3.5);lampGlow.position.y=2;lamp.add(lampGlow);
+const lampLight=new THREE.PointLight('#ffc85a',0,9,1.6);lampLight.position.y=2;lamp.add(lampLight);
+lamp.position.set(2.2,.55,2.3);island.add(lamp);
+const bench=new THREE.Group();
+const seat=new THREE.Mesh(new THREE.BoxGeometry(1.1,.08,.36),std('#c48a6a'));seat.position.y=.32;bench.add(seat);
+const back=new THREE.Mesh(new THREE.BoxGeometry(1.1,.32,.06),std('#c48a6a'));back.position.set(0,.52,-.16);bench.add(back);
+[-.45,.45].forEach(x=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.06,.32,.3),std('#8b6b4a'));l.position.set(x,.16,0);bench.add(l)});
+bench.position.set(2.9,.55,.1);bench.rotation.y=-1.3;island.add(bench);
+
+/* 篱笆 */
+for(let i=0;i<9;i++){const a=1.2+i*.12,r=6.3;
+  const post=new THREE.Mesh(new THREE.BoxGeometry(.1,.5,.1),std('#fff6ea'));post.position.set(Math.cos(a)*r,.8,Math.sin(a)*r);island.add(post)}
+{const a0=1.2,a1=1.2+8*.12,r=6.3,cur=new THREE.EllipseCurve(0,0,r,r,a0,a1);
+  const pts=cur.getPoints(16).map(v=>new THREE.Vector3(v.x,.92,v.y));
+  island.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),24,.035,4),std('#fff6ea')))}
+
+/* 远处的小浮岛 */
+function miniIsland(s,seed){
+  const g=new THREE.Group();
+  const gr=new THREE.Mesh(new THREE.CylinderGeometry(3,2.8,.7,8),std(seed%2?'#9ff0d0':'#7ee8c3'));g.add(gr);
+  const dt=new THREE.Mesh(new THREE.CylinderGeometry(2.8,2.1,.8,8),std('#d8b896'));dt.position.y=-.75;g.add(dt);
+  const rk=new THREE.Mesh(new THREE.ConeGeometry(2.1,3.4,8),std('#a8968a'));rk.rotation.x=Math.PI;rk.position.y=-2.85;g.add(rk);
+  const n=2+seed%3;
+  for(let i=0;i<n;i++){const t=new THREE.Mesh(new THREE.ConeGeometry(.6,1.5,7),std(TREE[(i+seed)%4]));
+    const a=i*2.3+seed;t.position.set(Math.cos(a)*1.4,1.1,Math.sin(a)*1.4);g.add(t)}
+  if(seed%2===0){const h=new THREE.Mesh(new THREE.BoxGeometry(.9,.7,.8),std('#fff6ea'));h.position.set(.3,.7,-.2);g.add(h);
+    const r=new THREE.Mesh(new THREE.ConeGeometry(.8,.6,4),std(seed===2?'#ffd166':'#c9b8ff'));r.position.set(.3,1.35,-.2);r.rotation.y=Math.PI/4;g.add(r)}
+  g.scale.setScalar(s);return g;
+}
+const minis=[[-24,3,-16,.75],[21,-1,-20,.6],[27,6,6,.5],[-20,-3,15,.55],[4,9,-34,.65],[-34,7,-2,.45]].map(([x,y,z,s],i)=>{
+  const m=miniIsland(s,i);m.position.set(x,y,z);m.userData={y,ph:i*1.7};scene.add(m);return m});
+
+/* 鸟群 */
+const birdMat=new THREE.MeshBasicMaterial({color:'#2f4a44',side:THREE.DoubleSide,transparent:true});
+const wingGeo=new THREE.BufferGeometry();wingGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array([0,0,-.18, 0,0,.18, .9,0,0]),3));
+const birds=[...Array(7)].map((_,i)=>{
+  const b=new THREE.Group(),l=new THREE.Mesh(wingGeo,birdMat),r=new THREE.Mesh(wingGeo,birdMat);r.scale.x=-1;b.add(l,r);
+  b.userData={l,r,rad:22+i%3*4,y:10+(i%4)*1.6,sp:.12+(i%3)*.02,off:i*.35+(i>3?.9:0),fl:i*1.3};
+  b.scale.setScalar(.9);scene.add(b);return b});
+
+/* 热气球 */
+const balloon=new THREE.Group();
+{const env=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,12),std('#7ee8c3'));env.scale.y=1.2;balloon.add(env);
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(1.62,1.62,.55,16,1,true),std('#ff9aa2',{side:THREE.DoubleSide}));balloon.add(band);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.9,1.1,16),std('#7ee8c3'));tip.rotation.x=Math.PI;tip.position.y=-1.95;balloon.add(tip);
+  const basket=new THREE.Mesh(new THREE.BoxGeometry(.6,.45,.6),std('#c48a6a'));basket.position.y=-3.1;balloon.add(basket);
+  const rope=new THREE.LineBasicMaterial({color:'#8b6b4a'});
+  [[-.28,-.28],[.28,-.28],[-.28,.28],[.28,.28]].forEach(([x,z])=>balloon.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x*2.2,-2.2,z*2.2),new THREE.Vector3(x,-2.9,z)]),rope)));
+  balloon.scale.setScalar(.9);scene.add(balloon);}
+
+/* 萤火虫（夜晚） */
+const ffN=110,ffP=new Float32Array(ffN*3),ffB=[];
+for(let i=0;i<ffN;i++){const a=Math.random()*Math.PI*2,r=rnd(1,9);ffB.push([Math.cos(a)*r,rnd(.8,4.5),Math.sin(a)*r,Math.random()*6])}
+const ffGeo=new THREE.BufferGeometry();ffGeo.setAttribute('position',new THREE.BufferAttribute(ffP,3));
+const ffMat=new THREE.PointsMaterial({map:glowTex,color:'#e8ff9a',size:.5,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0});
+const ff=new THREE.Points(ffGeo,ffMat);island.add(ff);
+
+/* 流星（夜晚） */
+let meteors=[],nextMeteor=2;
+function spawnMeteor(){
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:'#ffffff',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
+  const ang=rnd(-.5,-.25);sp.material.rotation=ang;sp.scale.set(14,.35,1);
+  sp.position.set(rnd(-120,60),rnd(70,130),rnd(-160,-90));scene.add(sp);
+  meteors.push({sp,v:new THREE.Vector3(Math.cos(ang),Math.sin(ang),0).multiplyScalar(95),life:0});
+}
+
+function updateExtras(dt,t){
+  minis.forEach(m=>{m.position.y=m.userData.y+Math.sin(t*.5+m.userData.ph)*.6;m.rotation.y+=dt*.03});
+  blades.rotation.z-=dt*1.2;
+  // 瀑布
+  const fp=fallGeo.attributes.position;
+  for(let i=0;i<fallN;i++){let y=fp.getY(i)-fallV[i]*dt;let x=fp.getX(i)-dt*.25;
+    if(y<-14){y=.5;x=fallX+rnd(-.25,.25)}fp.setY(i,y);fp.setX(i,x)}
+  fp.needsUpdate=true;
+  // 鸟：白天出现
+  birdMat.opacity=smooth(.15,.5,dayF);
+  birds.forEach(b=>{const u=b.userData,a=t*u.sp+u.off;
+    b.visible=birdMat.opacity>.02;
+    b.position.set(Math.cos(a)*u.rad,u.y+Math.sin(t*.7+u.fl)*.8,Math.sin(a)*u.rad);
+    b.rotation.y=-a;const f=Math.sin(t*9+u.fl)*.7;u.l.rotation.z=f;u.r.rotation.z=-f});
+  // 热气球
+  const ba=t*.04+2;balloon.position.set(Math.cos(ba)*19,7+Math.sin(t*.4)*1.2,Math.sin(ba)*19-4);balloon.rotation.y=t*.1;
+  // 夜晚：萤火虫、路灯、流星
+  const night=1-dayF;
+  ffMat.opacity=smooth(.2,.8,night);
+  for(let i=0;i<ffN;i++){const b=ffB[i];
+    ffP[i*3]=b[0]+Math.sin(t*.6+b[3])*.6;ffP[i*3+1]=b[1]+Math.sin(t*1.1+b[3]*2)*.35;ffP[i*3+2]=b[2]+Math.cos(t*.5+b[3])*.6}
+  ffGeo.attributes.position.needsUpdate=true;
+  bulbMat.emissiveIntensity=2*night;lampGlow.material.opacity=night;lampLight.intensity=6*night;
+  if(night>.7&&Math.max(rainF,snowF)<.2){nextMeteor-=dt;if(nextMeteor<0){spawnMeteor();nextMeteor=rnd(2.5,6)}}
+  meteors=meteors.filter(m=>{m.life+=dt;m.sp.position.addScaledVector(m.v,dt);m.sp.material.opacity=Math.max(0,1-m.life/1.2);
+    if(m.life>1.2){scene.remove(m.sp);m.sp.material.dispose();return false}return true});
+}
+
+
+/* ========== 天气：晴 / 雨 / 雪 ========== */
+let weather=store.get(KEY+'-wx')||'clear',rainF=weather==='rain'?1:0,snowF=weather==='snow'?1:0;
+const tmp2=new THREE.Color(),snowWhite=new THREE.Color('#f4f8fb');
+const GREENS=['#7ee8c3','#9ff0d0','#4fd1a5','#33bfa0','#21a87c','#6fdcaa','#3aa57f'].map(h=>new THREE.Color(h));
+const snowables=[];
+scene.traverse(o=>{const m=o.material;if(!m||!m.isMeshStandardMaterial||m.userData.c0)return;
+  const gi=GREENS.findIndex(c=>Math.abs(c.r-m.color.r)+Math.abs(c.g-m.color.g)+Math.abs(c.b-m.color.b)<.02);
+  if(gi>=0){m.userData.c0=m.color.clone();m.userData.k=gi<2?.88:.5;snowables.push(m)}});
+// 雨
+const RN=1500,rainP=new Float32Array(RN*6),rainS=new Float32Array(RN);
+const resetDrop=(i,top)=>{const x=rnd(-48,48),y=top?rnd(36,44):rnd(-20,42),z=rnd(-48,48);
+  rainP.set([x,y,z,x+.14,y+.95,z],i*6);rainS[i]=rnd(30,42)};
+for(let i=0;i<RN;i++)resetDrop(i,false);
+const rainGeo=new THREE.BufferGeometry();rainGeo.setAttribute('position',new THREE.BufferAttribute(rainP,3));
+const rainMat=new THREE.LineBasicMaterial({color:'#d6e8f7',transparent:true,opacity:0,depthWrite:false});
+const rain=new THREE.LineSegments(rainGeo,rainMat);rain.frustumCulled=false;scene.add(rain);
+// 雪
+const SN=1700,snowP=new Float32Array(SN*3),snowB=[];
+for(let i=0;i<SN;i++){snowP[i*3]=rnd(-48,48);snowP[i*3+1]=rnd(-20,42);snowP[i*3+2]=rnd(-48,48);snowB.push([rnd(1.6,3.2),Math.random()*6])}
+const snowGeo=new THREE.BufferGeometry();snowGeo.setAttribute('position',new THREE.BufferAttribute(snowP,3));
+const snowMat=new THREE.PointsMaterial({map:glowTex,color:'#ffffff',size:.5,transparent:true,opacity:0,depthWrite:false});
+const snow=new THREE.Points(snowGeo,snowMat);snow.frustumCulled=false;scene.add(snow);
+let flash=0,nextFlash=6;
+function setWeather(w){weather=w;store.set(KEY+'-wx',w);
+  document.querySelectorAll('[data-w]').forEach(b=>b.classList.toggle('on',b.dataset.w===w));
+  toast(T('tst_'+w))}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(b)setWeather(b.dataset.w)});
+document.querySelectorAll('[data-w]').forEach(b=>b.classList.toggle('on',b.dataset.w===weather));
+
+/* ========== 秋千 ========== */
+const SW_P=new THREE.Vector3(-4.5,.55,3.33);
+const swing=new THREE.Group();swing.position.copy(SW_P);
+swing.rotation.y=Math.atan2(SW_P.x,SW_P.z);   // 本地 +z 朝向岛外
+const wood=std('#c48a6a'),wood2=std('#a8744f');
+for(const sx of [-1,1])for(const sz of [-1,1]){
+  const leg=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,4.35,6),wood2);
+  leg.position.set(sx*1.05,2.12,sz*.5);leg.rotation.x=Math.asin(-sz*.5/2.17);swing.add(leg)}
+const bar=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,2.5,8),wood);bar.rotation.z=Math.PI/2;bar.position.y=4.25;swing.add(bar);
+for(let i=0;i<7;i++){const f=new THREE.Mesh(flowerGeo,std(PET[(i+2)%PET.length]));f.position.set(-1+i*.33,4.38,Math.sin(i*2)*.06);f.scale.setScalar(1.15);swing.add(f)}
+const pivot=new THREE.Group();pivot.position.y=4.2;swing.add(pivot);
+const ropeMat=std('#f3e6cf');
+for(const x of [-.46,.46]){const r=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,3.3,5),ropeMat);r.position.set(x,-1.65,0);pivot.add(r)}
+const swSeat=new THREE.Mesh(new THREE.BoxGeometry(1.15,.1,.45),wood);swSeat.position.y=-3.32;pivot.add(swSeat);
+const cushion=new THREE.Mesh(new THREE.BoxGeometry(.9,.08,.36),std('#ffb3c1'));cushion.position.y=-3.23;pivot.add(cushion);
+const headAnchor=new THREE.Object3D();headAnchor.position.set(0,-2.35,-.08);pivot.add(headAnchor);
+island.add(swing);
+const swingMeshes=[];swing.traverse(o=>{if(o.isMesh)swingMeshes.push(o)});
+
+let swingOn=false,returning=false,camT=0,camFrom=null,camSaved=null,swAmp=.06,swPh=0,yaw=0,yawT=0,breathT=0;
+const v1=new THREE.Vector3(),v2=new THREE.Vector3(),qTo=new THREE.Quaternion(),mtx=new THREE.Matrix4(),UP=new THREE.Vector3(0,1,0);
+function enterSwing(){
+  if(swingOn)return;
+  if(!returning)camSaved={pos:camera.position.clone(),tgt:controls.target.clone(),rot:controls.autoRotate};
+  swingOn=true;returning=false;camT=0;camFrom={pos:camera.position.clone(),q:camera.quaternion.clone()};
+  controls.enabled=false;controls.autoRotate=false;rotBtnSync();
+  $('#guide').classList.remove('open');document.body.classList.add('swinging');hovered=null;
+}
+function exitSwing(){
+  if(!swingOn)return;swingOn=false;returning=true;camT=0;
+  camFrom={pos:camera.position.clone(),q:camera.quaternion.clone()};document.body.classList.remove('swinging');
+}
+function updateSwingCam(dt){
+  if(swingOn){
+    camT=Math.min(1,camT+dt/2.4);const e=smooth(0,1,camT);
+    headAnchor.getWorldPosition(v1);
+    swing.getWorldDirection(v2);                       // 岛外方向
+    const side=new THREE.Vector3().crossVectors(UP,v2).normalize();
+    yaw+=(yawT-yaw)*Math.min(1,dt*3);
+    const look=v1.clone().addScaledVector(v2,30).addScaledVector(side,yaw*22).add(new THREE.Vector3(0,-6,0));
+    mtx.lookAt(v1,look,UP);qTo.setFromRotationMatrix(mtx);
+    camera.position.lerpVectors(camFrom.pos,v1,e);camera.quaternion.slerpQuaternions(camFrom.q,qTo,e);
+    return true;
+  }
+  if(returning){
+    camT=Math.min(1,camT+dt/2);const e=smooth(0,1,camT);
+    mtx.lookAt(camSaved.pos,camSaved.tgt,UP);qTo.setFromRotationMatrix(mtx);
+    camera.position.lerpVectors(camFrom.pos,camSaved.pos,e);camera.quaternion.slerpQuaternions(camFrom.q,qTo,e);
+    if(camT>=1){returning=false;controls.target.copy(camSaved.tgt);controls.enabled=true;controls.autoRotate=camSaved.rot;rotBtnSync();controls.update()}
+    return true;
+  }
+  return false;
+}
+canvas.addEventListener('pointermove',e=>{if(swingOn)yawT=-(e.clientX/W()-.5)*1.1});
+addEventListener('keydown',e=>{if(e.key==='Escape'){exitSwing();$('#guide').classList.remove('open')}});
+$('#swingBtn').onclick=enterSwing;$('#guideSwing').onclick=enterSwing;$('#swingExit').onclick=exitSwing;
+
+/* 使用指南 */
+$('#guideBtn').onclick=()=>$('#guide').classList.toggle('open');
+$('#guideClose').onclick=()=>$('#guide').classList.remove('open');
+if(!store.get(KEY+'-guided')){$('#guide').classList.add('open');store.set(KEY+'-guided','1')}
+
+function updateWeather(dt,t){
+  const k=Math.min(1,dt*1.2);
+  rainF+=((weather==='rain'?1:0)-rainF)*k;snowF+=((weather==='snow'?1:0)-snowF)*k;
+  const wx=Math.max(rainF,snowF);
+  // 雨
+  rainMat.opacity=.55*rainF;rain.visible=rainF>.01;
+  if(rain.visible){for(let i=0;i<RN;i++){const d=rainS[i]*dt,o=i*6;
+    rainP[o+1]-=d;rainP[o+4]-=d;rainP[o]-=d*.15;rainP[o+3]-=d*.15;if(rainP[o+1]<-20)resetDrop(i,true)}
+    rainGeo.attributes.position.needsUpdate=true}
+  // 雪
+  snowMat.opacity=.95*snowF;snow.visible=snowF>.01;
+  if(snow.visible){for(let i=0;i<SN;i++){const b=snowB[i],o=i*3;
+    snowP[o+1]-=b[0]*dt;snowP[o]+=Math.sin(t*.8+b[1])*dt*.6;snowP[o+2]+=Math.cos(t*.6+b[1])*dt*.4;
+    if(snowP[o+1]<-20){snowP[o+1]=rnd(38,44);snowP[o]=rnd(-48,48);snowP[o+2]=rnd(-48,48)}}
+    snowGeo.attributes.position.needsUpdate=true}
+  // 雨天打闪
+  if(rainF>.8){nextFlash-=dt;if(nextFlash<0){flash=1;nextFlash=rnd(7,16)}}
+  if(flash>0){flash=Math.max(0,flash-dt*3.2);const f=flash*(Math.sin(flash*40)>0?1:.4);hemi.intensity+=3.5*f;scene.background.lerp(white,.35*f)}
+  // 坏天气时鸟儿躲起来，萤火虫变少
+  birdMat.opacity*=1-wx;birds.forEach(b=>b.visible=birdMat.opacity>.02);
+  ffMat.opacity*=1-.8*wx;
+  // 秋千
+  swAmp+=((swingOn?.5:.06)-swAmp)*Math.min(1,dt*.8);
+  swPh+=dt*Math.PI*2/3.6;pivot.rotation.x=swAmp*Math.sin(swPh);
+  if(swingOn){breathT+=dt;const c=breathT%8;$('#breathTxt').textContent=T(c<4?'inhale':'exhale')}
+}
+
+/* ========== 待办星球 ========== */
+const orbGeo=new THREE.SphereGeometry(.6,28,18),ringGeo=new THREE.TorusGeometry(1,.05,8,48);
+const PRIC={high:'#ff8a8a',mid:'#ffc46b',low:'#8fceff'};
+const orbGroup=new THREE.Group();scene.add(orbGroup);
+let orbs=[],newId=null,hovered=null;
+function buildOrbs(){
+  orbs.forEach(o=>{o.g.traverse(m=>{if(m.material)m.material.dispose()});orbGroup.remove(o.g)});
+  const ts=todayTasks();
+  orbs=ts.map((task,i)=>{
+    const g=new THREE.Group(),col=new THREE.Color(task.done?'#4fd1a5':(PRIC[task.pri]||PRIC.mid));
+    const mesh=new THREE.Mesh(orbGeo,new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:task.done?1.1:.28,roughness:.35,metalness:.1}));
+    g.add(mesh);
+    if(task.done){
+      const ring=new THREE.Mesh(ringGeo,new THREE.MeshBasicMaterial({color:'#c8fbe6',transparent:true,opacity:.85}));ring.rotation.x=Math.PI/2.5;g.add(ring);
+      g.add(mkGlow('#7ee8c3',3.4));
+    }
+    const lane=i%3;
+    return {g,mesh,task,r:10+lane*2,a0:i/Math.max(ts.length,1)*Math.PI*2+lane*.5,
+      sp:(.2-lane*.04)*(lane===1?-1:1),y:1.6+Math.sin(i*1.7)*1.8,ph:i*1.3,grow:task.id===newId?0:1};
+  });
+  orbs.forEach(o=>orbGroup.add(o.g));newId=null;renderList();
+}
+function renderList(){
+  const ts=todayTasks(),d=ts.filter(t=>t.done).length;
+  $('#cnt').textContent=`${d}/${ts.length}`;
+  const sorted=[...ts].sort((a,b)=>a.done-b.done);
+  $('#list').innerHTML=sorted.length?sorted.map(t=>`<li class="${t.done?'done':''}" data-id="${t.id}"><span class="d" style="background:var(--${t.pri||'mid'})"></span>${esc(t.text)}</li>`).join('')
+    :`<div class="empty">${T('planet_empty')}</div>`;
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toggleTask(id){
+  let txt='',now=false,all=false;
+  mutateToday(ts=>{const t=ts.find(x=>x.id===id);if(!t)return;t.done=!t.done;txt=t.text;now=t.done;all=ts.length&&ts.every(x=>x.done)});
+  buildOrbs();
+  if(all){burst();toast(T('tst_all'))}else toast(T(now?'tst_done':'tst_undo',{t:txt}));
+}
+$('#list').onclick=e=>{const li=e.target.closest('li');if(li)toggleTask(li.dataset.id)};
+$('#addForm').onsubmit=e=>{e.preventDefault();const v=$('#newText').value.trim();if(!v)return;
+  const id=uid();mutateToday(ts=>ts.push({id,text:v,done:false,pri:'mid',cat:'其他',time:''}));newId=id;$('#newText').value='';buildOrbs();toast(T('tst_new'))};
+$('#todoHead').onclick=()=>$('#todoCard').classList.toggle('collapsed');
+if(W()<760)$('#todoCard').classList.add('collapsed');
+addEventListener('storage',e=>{if(e.key===KEY){mem=null;buildOrbs()}});
+
+/* 庆祝粒子 */
+let bursts=[];
+function burst(){
+  const n=240,p=new Float32Array(n*3),v=[];
+  for(let i=0;i<n;i++){const d=new THREE.Vector3().randomDirection().multiplyScalar(6+Math.random()*10);d.y=Math.abs(d.y)+3;v.push(d)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const m=new THREE.PointsMaterial({map:glowTex,color:'#9ff3d2',size:.9,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
+  const pts=new THREE.Points(g,m);pts.position.copy(island.position).add(new THREE.Vector3(0,2,0));scene.add(pts);
+  bursts.push({pts,v,life:0});
+}
+
+/* ========== 交互：点选星球 ========== */
+const ray=new THREE.Raycaster(),ptr=new THREE.Vector2();let down=null;
+function pick(e){const r=canvas.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(ptr,camera);const h=ray.intersectObjects(orbs.map(o=>o.mesh))[0];return h?orbs.find(o=>o.mesh===h.object):null}
+canvas.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){hovered=pick(e);canvas.style.cursor=(hovered||(!swingOn&&ray.intersectObjects(swingMeshes).length))?'pointer':''}});
+canvas.addEventListener('pointerleave',()=>hovered=null);
+canvas.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
+canvas.addEventListener('pointerup',e=>{if(!down)return;const m=Math.hypot(e.clientX-down[0],e.clientY-down[1]);down=null;
+  if(m<6){const o=pick(e);if(o)toggleTask(o.task.id);else if(!swingOn&&ray.intersectObjects(swingMeshes).length)enterSwing()}});
+
+/* ========== 时间控制 ========== */
+let mode='live',viewH=hourNow(),playing=false,played=0;
+const slider=$('#slider');
+slider.style.background='linear-gradient(90deg,'+KF.map(k=>`${k.hex.mid} ${(k.h/24*100).toFixed(1)}%`).join(',')+')';
+slider.oninput=()=>{mode='preview';playing=false;viewH=+slider.value;syncMode()};
+$('#playBtn').onclick=()=>{playing=!playing;if(playing){mode='preview';played=0}syncMode()};
+$('#liveBtn').onclick=()=>{mode='live';playing=false;syncMode()};
+function syncMode(){
+  $('#playBtn').textContent=T(playing?'pause':'play');
+  $('#modeTag').textContent=T(playing?'mode_ff':mode==='live'?'mode_live':'mode_prev');
+}
+const rotBtnSync=()=>{$('#rotBtn').classList.toggle('solid',controls.autoRotate)};
+$('#rotBtn').onclick=()=>{controls.autoRotate=!controls.autoRotate;rotBtnSync()};rotBtnSync();
+const st=store.get(KEY+'-theme');if(st)document.documentElement.dataset.theme=st;
+$('#themeBtn').onclick=()=>{const c=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const t=c==='dark'?'light':'dark';document.documentElement.dataset.theme=t;store.set(KEY+'-theme',t)};
+
+/* ========== 更新天色 ========== */
+const R=90,white=new THREE.Color('#ffffff'),tmp=new THREE.Color();
+function updateSky(h){
+  skyAt(h);
+  skyMat.uniforms.top.value.copy(cTop);skyMat.uniforms.mid.value.copy(cMid);skyMat.uniforms.bot.value.copy(cBot);
+  const th=(h-6)/12*Math.PI,el=Math.sin(th);
+  sun.position.set(-Math.cos(th)*R,el*R*.8,-40);moon.position.set(Math.cos(th)*R,-el*R*.8,-40);
+  sun.visible=el>-.15;moon.visible=el<.15;
+  const day=smooth(-.12,.3,el);dayF=day;
+  skyMat.uniforms.sunDir.value.copy(sun.position).normalize();
+  skyMat.uniforms.glow.value.copy(tmp.copy(white).lerp(cBot,.5));
+  skyMat.uniforms.glowStr.value=smooth(-.25,.05,el);
+  sunGlow.material.color.copy(tmp.set('#ffd27a').lerp(cBot,.4));
+  sunLight.position.copy(sun.position);sunLight.intensity=2.2*day;
+  sunLight.color.copy(tmp.set('#fff3dd').lerp(cBot,1-smooth(.05,.5,el)));
+  moonLight.position.copy(moon.position);moonLight.intensity=.7*(1-day);
+  hemi.color.copy(cTop).lerp(white,.35);hemi.groundColor.copy(cBot);hemi.intensity=.75+.65*day;
+  starMat.opacity=Math.pow(1-day,1.6);
+  winMat.emissiveIntensity=1.6*(1-day);winGlow.material.opacity=1-day;
+  cloudMat.color.copy(white).lerp(cMid,.45);cloudMat.emissive.copy(cBot).multiplyScalar(.18+.2*(1-day));
+  motes.material.color.copy(tmp.set('#bff5e0').lerp(cBot,.35));
+  scene.background=cMid;scene.fog.color.copy(cMid);
+  pondMat.color.copy(tmp.set('#8fd8ff').lerp(cTop,.45));
+  /* 天气对天色的影响 */
+  const wx=Math.max(rainF,snowF),isRain=rainF>=snowF;
+  if(wx>.001){
+    const g=tmp2.set(isRain?'#6f7c86':'#dfe6ec').multiplyScalar(isRain?(.28+.72*day):(.3+.7*day));
+    const k=rainF*.62+snowF*.45;
+    cTop.lerp(g,k);cMid.lerp(g,k*.9);cBot.lerp(g,k*.8);
+    skyMat.uniforms.top.value.copy(cTop);skyMat.uniforms.mid.value.copy(cMid);skyMat.uniforms.bot.value.copy(cBot);
+    scene.fog.color.copy(cMid);
+    skyMat.uniforms.glowStr.value*=1-.85*wx;sunLight.intensity*=1-.6*wx;starMat.opacity*=1-.95*wx;
+    hemi.color.copy(cTop).lerp(white,.35);hemi.groundColor.copy(cBot);
+    cloudMat.color.lerp(tmp2.set(isRain?'#9aa6ae':'#f4f7fa'),wx*.8);
+    if(wx>.6){sun.visible=false;moon.visible=false}
+  }
+  scene.fog.near=55-28*wx;scene.fog.far=230-120*wx;
+  snowables.forEach(m=>m.color.copy(m.userData.c0).lerp(snowWhite,m.userData.k*snowF));
+}
+
+/* ========== 主循环 ========== */
+const clock=new THREE.Clock();let uiT=0,curDay=fmt(bj());
+function frame(){
+  const dt=Math.min(clock.getDelta(),.1),t=clock.elapsedTime;
+  if(playing){viewH=(viewH+dt*1.2)%24;played+=dt*1.2;if(played>=24){playing=false;mode='live';syncMode()}}
+  else if(mode==='live')viewH=hourNow();
+  if(playing||mode==='live')slider.value=viewH;
+  updateSky(viewH);
+
+  island.position.y=Math.sin(t*.6)*.35-1;island.rotation.y=Math.sin(t*.15)*.08;
+  clouds.forEach(c=>{c.position.x+=c.userData.v*dt;if(c.position.x>70)c.position.x=-70});
+  const mp=motes.geometry.attributes.position;
+  for(let i=0;i<mp.count;i++){let y=mp.getY(i)+dt*(.3+(i%5)*.08);if(y>14)y=-10;mp.setY(i,y);mp.setX(i,mp.getX(i)+Math.sin(t*.5+i)*dt*.15)}
+  mp.needsUpdate=true;
+  updateExtras(dt,t);updateWeather(dt,t);
+
+  orbs.forEach(o=>{const a=o.a0+t*o.sp;
+    o.g.position.set(Math.cos(a)*o.r,o.y+Math.sin(t*.8+o.ph)*.35+island.position.y+1,Math.sin(a)*o.r);
+    if(o.grow<1)o.grow=Math.min(1,o.grow+dt*1.4);
+    o.g.scale.setScalar(Math.max(.01,easeOutBack(o.grow))*(o===hovered?1.35:1));o.mesh.rotation.y+=dt*.6});
+
+  bursts=bursts.filter(b=>{b.life+=dt;const p=b.pts.geometry.attributes.position;
+    for(let i=0;i<p.count;i++){const v=b.v[i];v.y-=dt*6;p.setXYZ(i,p.getX(i)+v.x*dt,p.getY(i)+v.y*dt,p.getZ(i)+v.z*dt)}
+    p.needsUpdate=true;b.pts.material.opacity=Math.max(0,1-b.life/2.4);
+    if(b.life>2.4){scene.remove(b.pts);b.pts.geometry.dispose();b.pts.material.dispose();return false}return true});
+
+  const lb=$('#label');
+  if(hovered&&orbs.includes(hovered)){const v=hovered.g.position.clone().project(camera);
+    lb.style.display='block';lb.style.left=((v.x+1)/2*W())+'px';lb.style.top=((1-v.y)/2*H())+'px';
+    lb.innerHTML=`${esc(hovered.task.text)}<small>${T(hovered.task.done?'lb_done':'lb_todo')}</small>`}
+  else lb.style.display='none';
+
+  uiT+=dt;if(uiT>.25){uiT=0;
+    const d=bj();
+    $('#clock').innerHTML=`${pad(d.getHours())}<span class="colon">:</span>${pad(d.getMinutes())}<small>${pad(d.getSeconds())}</small>`;
+    $('#date').textContent=T('bj_time')+' · '+clockDate(d);
+    $('#viewTime').textContent=hf(viewH);
+    const p=PHASES.find(x=>viewH>=x.from&&viewH<x.to)||PHASES[0];$('#phase').textContent=`${p.icon} ${T('ph_'+p.key)}`;
+    if(fmt(d)!==curDay){curDay=fmt(d);buildOrbs()}
+  }
+  if(!updateSwingCam(dt))controls.update();renderer.render(scene,camera);requestAnimationFrame(frame);
+}
+addEventListener('resize',()=>{camera.aspect=W()/H();camera.updateProjectionMatrix();renderer.setSize(W(),H())});
+
+addEventListener('langchange',()=>{renderList();syncMode();uiT=1});
+buildOrbs();syncMode();$('#loading').hidden=true;frame();
+</script>
+</body>
+</html>
