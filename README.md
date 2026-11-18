@@ -8,7 +8,8 @@
 
 🔗 **在线使用：** https://moonpie-cr.github.io/daily-todolist/
 
----
+<img width="1920" height="989" alt="image" src="https://github.com/user-attachments/assets/60f6bb97-5ef0-42e4-98a9-f19415fff17b" />
+
 
 ## ✨ 功能
 
